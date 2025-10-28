@@ -24,11 +24,11 @@ def parse_GPX_to_points(gpx):
     return dists, elevs
 
 #interpolates 1m steps between the distance and elevation points
-def resample_to_1m(dists, elevs, step=1.0):
-    elevs = savgol_filter(elevs, window_length=9, polyorder=2)
+def resample_to_1m(dists, elevs, step=0.5):
     interp_func = interp1d(dists, elevs, kind='linear', fill_value='extrapolate')
     new_dists = np.arange(0, dists[-1], step=step)
     new_elevs = interp_func(new_dists)
+    new_elevs = savgol_filter(new_elevs, window_length=201, polyorder=4)
     return new_dists, new_elevs
 
 if __name__ == "__main__":
@@ -38,12 +38,10 @@ if __name__ == "__main__":
 
     dists, elevs = parse_GPX_to_points(gpx)
     new_dists, new_elevs = resample_to_1m(dists, elevs)
-    print(new_dists)
-    print(new_elevs)
 
     import matplotlib.pyplot as plt
 
-    plt.figure(figsize=(12, 4))
+    plt.figure(figsize=(50, 4))
     plt.plot(new_dists, new_elevs, color='blue', label='Interpolated Elevation (1m)')
     plt.xlabel('Distance (m)')
     plt.ylabel('Elevation (m)')
@@ -52,7 +50,7 @@ if __name__ == "__main__":
     plt.grid(True)
     plt.show()
 
-    plt.figure(figsize=(12, 4))
+    plt.figure(figsize=(50, 4))
     plt.plot(dists, elevs, 'o', color='red', label='Original GPX Points')
     plt.plot(new_dists, new_elevs, '-', color='blue', label='Interpolated (1m)')
     plt.xlabel('Distance (m)')
