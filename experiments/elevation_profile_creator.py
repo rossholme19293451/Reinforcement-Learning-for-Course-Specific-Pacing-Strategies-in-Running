@@ -12,7 +12,7 @@ def parse_GPX_to_points(gpx):
             prev = None
             for point in segment.points:
                 if prev is not None:
-                    dist = point.distance_3d(prev)
+                    dist = point.distance_2d(prev)
                     total_distance += dist
 
                 points.append((total_distance, point.elevation))
@@ -25,7 +25,7 @@ def parse_GPX_to_points(gpx):
 
 #interpolates 1m steps between the distance and elevation points
 def resample_to_1m(dists, elevs, step=1.0):
-    elevs = savgol_filter(elevs, window_length=7, polyorder=5)
+    elevs = savgol_filter(elevs, window_length=9, polyorder=2)
     interp_func = interp1d(dists, elevs, kind='linear', fill_value='extrapolate')
     new_dists = np.arange(0, dists[-1], step=step)
     new_elevs = interp_func(new_dists)
@@ -38,6 +38,8 @@ if __name__ == "__main__":
 
     dists, elevs = parse_GPX_to_points(gpx)
     new_dists, new_elevs = resample_to_1m(dists, elevs)
+    print(new_dists)
+    print(new_elevs)
 
     import matplotlib.pyplot as plt
 
