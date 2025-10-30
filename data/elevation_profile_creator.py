@@ -1,3 +1,5 @@
+import csv
+
 import gpxpy
 import numpy as np
 from scipy.interpolate import interp1d
@@ -31,13 +33,24 @@ def resample_to_1m(dists, elevs, step=0.5):
     new_elevs = savgol_filter(new_elevs, window_length=201, polyorder=4)
     return new_dists, new_elevs
 
+#save the elevation profile to csv file
+def save_csv(filename, dists, elevs):
+    with open(filename, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['Distance', 'Elevation'])
+        writer.writerows(zip(dists, elevs))
+        print(f"Saved to {filename}")
+        f.close()
+
 if __name__ == "__main__":
     # load gpx file
-    with open("../data/course_GPXs/Ryde_10.gpx", "r") as f:
+    with open("course_GPXs/Ryde_10.gpx", "r") as f:
         gpx = gpxpy.parse(f)
 
     dists, elevs = parse_GPX_to_points(gpx)
     new_dists, new_elevs = resample_to_1m(dists, elevs)
+    filename = "../data/elevation_profiles/Ryde_10.csv"
+    save_csv(filename, new_dists, new_elevs)
 
     import matplotlib.pyplot as plt
 
