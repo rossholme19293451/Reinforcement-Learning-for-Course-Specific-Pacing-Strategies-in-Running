@@ -26,7 +26,7 @@ def parse_GPX_to_points(gpx):
     return dists, elevs
 
 #interpolates 1m steps between the distance and elevation points
-def resample_to_1m(dists, elevs, step=0.5):
+def resample_to_1m(dists, elevs, step=1):
     interp_func = interp1d(dists, elevs, kind='linear', fill_value='extrapolate')
     new_dists = np.arange(0, dists[-1], step=step)
     new_elevs = interp_func(new_dists)
