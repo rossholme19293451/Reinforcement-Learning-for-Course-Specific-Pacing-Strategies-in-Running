@@ -17,7 +17,7 @@ done = False
 distances, velocities, energies, elevations= [], [], [], []
 
 while not done:
-    action = [env.Fmax * 0.561]
+    action = [env.Fmax * 0.56]
     obs, reward, terminated, truncated, info = env.step(action)
     print(info)
     env.render()
@@ -48,6 +48,7 @@ plt.title("Velocity mapped onto Elevation Profile")
 fig.tight_layout()
 plt.show()
 
+#plot distance and energy
 plt.figure(figsize=(12,6))
 plt.plot(distances, energies, color='red')
 plt.xlabel("Distance (m)")

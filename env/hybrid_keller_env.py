@@ -1,6 +1,7 @@
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
+from sympy.physics.mechanics.loads import gravity
 
 g = 9.81 #gravity
 
@@ -69,7 +70,7 @@ class hybrid_keller_env(gym.Env):
         #grade_effect = 0
 
         #keller dynamics to calculate velocity
-        dv = (f - self.velocity/self.r - grade_effect ) * self.dt
+        dv = ((f - grade_effect) - self.velocity/self.r) * self.dt
         self.velocity = max(0.0, self.velocity + dv)
 
         #distance update
@@ -77,7 +78,7 @@ class hybrid_keller_env(gym.Env):
         self.distance = min(self.distance + dx, self.total_distance)
 
         #energy update
-        dE = (self.sigma - f * self.velocity) * self.dt
+        dE = (self.sigma - ((f + grade_effect) * self.velocity)) * self.dt
         self.energy += min(0.0, dE)
 
         #time update
