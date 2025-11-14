@@ -1,7 +1,6 @@
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
-from sympy.physics.mechanics.loads import gravity
 
 g = 9.81 #gravity
 
