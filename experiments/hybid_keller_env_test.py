@@ -17,7 +17,7 @@ done = False
 distances, velocities, energies, elevations= [], [], [], []
 
 while not done:
-    action = [env.Fmax * 0.56]
+    action = [env.Fmax * 0.565]
     obs, reward, terminated, truncated, info = env.step(action)
     print(info)
     env.render()
@@ -50,7 +50,7 @@ plt.show()
 
 #plot distance and energy
 plt.figure(figsize=(12,6))
-plt.plot(distances, energies, color='red')
+plt.plot(distances, energies, color='green')
 plt.xlabel("Distance (m)")
 plt.ylabel("Energy (J/kg)")
 plt.title("Energy vs Distance")

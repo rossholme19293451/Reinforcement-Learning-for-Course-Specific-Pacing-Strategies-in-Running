@@ -69,7 +69,7 @@ class hybrid_keller_env(gym.Env):
         #grade_effect = 0
 
         #keller dynamics to calculate velocity
-        dv = ((f - grade_effect) - self.velocity/self.r) * self.dt
+        dv = (f - self.velocity/self.r - grade_effect) * self.dt
         self.velocity = max(0.0, self.velocity + dv)
 
         #distance update
@@ -78,7 +78,7 @@ class hybrid_keller_env(gym.Env):
 
         #energy update
         dE = (self.sigma - ((f + grade_effect) * self.velocity)) * self.dt
-        self.energy += min(0.0, dE)
+        self.energy = min(self.energy + dE, self.E0)
 
         #time update
         self.time += self.dt
