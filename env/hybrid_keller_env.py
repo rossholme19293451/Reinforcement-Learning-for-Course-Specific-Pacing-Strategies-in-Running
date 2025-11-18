@@ -12,7 +12,8 @@ class hybrid_keller_env(gym.Env):
         Fmax, #m/s^2
         sigma, #j/(kg*s)
         E0, #j/kg
-        dt = 1.0,
+        tau, #s
+        dt = 1.0, #s
         max_time = 3*3600
     ):
 
@@ -37,6 +38,7 @@ class hybrid_keller_env(gym.Env):
         self.E0 = float(E0)
         self.dt = float(dt)
         self.g = float(g)
+        self.recovery_rate = 1 - np.exp(-dt/tau)
 
         # 0 <= f(t) <= Fmax
         self.action_space = spaces.Box(low = np.array([0.0]), high = np.array([self.Fmax]), dtype=np.float32)
@@ -66,7 +68,6 @@ class hybrid_keller_env(gym.Env):
 
         grade = self._get_grade(self.distance)
         grade_effect = self.g * grade
-        #grade_effect = 0
 
         #keller dynamics to calculate velocity
         dv = (f - self.velocity/self.r - grade_effect) * self.dt
@@ -77,18 +78,23 @@ class hybrid_keller_env(gym.Env):
         self.distance = min(self.distance + dx, self.total_distance)
 
         #energy update
-        dE = (self.sigma - ((f + grade_effect) * self.velocity)) * self.dt
+        dE = (self.sigma - (f * self.velocity)) * self.dt
+        if dE > 0:
+            dE *= self.recovery_rate
         self.energy = min(self.energy + dE, self.E0)
 
         #time update
         self.time += self.dt
 
         #termination
-        terminated = self.energy <= 0.0 or self.distance >= self.total_distance
-        truncated = self.time > self.max_time
+        terminated = self.distance >= self.total_distance
+        truncated = self.energy <= 0.0 or self.time > self.max_time
 
         #reward
-        reward = -0.1
+        if self.energy <= 0.0 and not terminated:
+            reward = self.time - self.max_time
+        else:
+            reward = -0.1
 
         obs = np.array([self.distance, self.velocity, self.energy], dtype=np.float32)
         info = {"time": self.time, "grade": grade}
