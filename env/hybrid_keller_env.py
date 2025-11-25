@@ -13,6 +13,8 @@ class hybrid_keller_env(gym.Env):
         sigma, #j/(kg*s)
         E0, #j/kg
         tau, #s
+        dRw, #distance Reward weight
+        eRw, #energy Reward weight
         dt = 1.0, #s
         max_time = 3*3600
     ):
@@ -39,6 +41,8 @@ class hybrid_keller_env(gym.Env):
         self.dt = float(dt)
         self.g = float(g)
         self.recovery_rate = 1 - np.exp(-dt/tau)
+        self.dRw = float(dRw)
+        self.eRw = float(eRw)
 
         # 0 <= f(t) <= Fmax
         self.action_space = spaces.Box(low = np.array([0.0]), high = np.array([self.Fmax]), dtype=np.float32)
@@ -91,8 +95,8 @@ class hybrid_keller_env(gym.Env):
         truncated = self.energy <= 0.0 or self.time > self.max_time
 
         #reward
-        if self.energy <= 0.0 and not terminated:
-            reward = self.time - self.max_time
+        if terminated or truncated:
+            reward = - ((self.dRw * (self.total_distance - self.distance)) + (self.eRw * self.energy))
         else:
             reward = -0.1
 
