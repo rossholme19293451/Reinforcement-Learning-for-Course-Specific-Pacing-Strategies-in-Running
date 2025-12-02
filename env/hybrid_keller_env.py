@@ -95,8 +95,10 @@ class hybrid_keller_env(gym.Env):
         truncated = self.energy <= 0.0 or self.time > self.max_time
 
         #reward
-        if terminated or truncated:
-            reward = - ((self.dRw * (self.total_distance - self.distance)) + (self.eRw * self.energy))
+        if terminated:
+            reward = - (self.eRw * self.energy)
+        elif truncated:
+            reward = self.dRw * (self.distance - self.total_distance)
         else:
             reward = -0.1
 
