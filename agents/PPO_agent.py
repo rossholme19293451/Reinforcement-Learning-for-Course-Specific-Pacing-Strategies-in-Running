@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from pyparsing import actions
 
 
 class ActorCritic(nn.Module):
@@ -18,17 +17,19 @@ class ActorCritic(nn.Module):
         self.policy_head = nn.Linear(256, action_dim)
         self.value_head = nn.Linear(256, 1)
 
-        self.log_std = nn.Parameter(torch.zeros(action_dim))
+        self.log_std = nn.Parameter(torch.zeros(action_dim) - 0.5)
 
     def forward(self, x):
         h = self.net(x)
         return self.policy_head(h), self.value_head(h)
 
-    def get_action(self, obs):
+    def get_action(self, obs, Fmax):
         mean, value = self.forward(obs)
+        mean = torch.sigmoid(mean) * Fmax
+
         std = self.log_std.exp()
         dist = torch.distributions.Normal(mean, std)
-        action = dist.sample()
+        action = dist.rsample()
         log_prob = dist.log_prob(action).sum(-1)
         return action, log_prob, value
 
@@ -36,15 +37,15 @@ class PPO_Agent:
     def __init__(
             self,
             env_fn,
-            frames_per_batch = 1024,
-            total_frames = 50_000,
+            device,
+            frames_per_batch = 4096,
+            total_frames = 500_000,
             gamma = 0.99,
             lam = 0.95,
             clip_epsilon = 0.2,
-            lr = 0.01,
+            lr = 0.0005,
             epochs = 10,
             minibatch_size = 64,
-            device = 'cpu',
     ):
         self.env = env_fn
         self.frames_per_batch = frames_per_batch
@@ -70,26 +71,26 @@ class PPO_Agent:
         rewards = []
         dones = []
         values = []
-
         obs, _ = self.env.reset()
-        for _ in range(self.frames_per_batch):
-            obs_t = torch.tensor(obs).to(self.device)
-            with torch.no_grad():
-                action, log_prob, value = self.model.get_action(obs_t)
 
-            action = action.cpu().numpy()
-            next_obs, reward, terminated, truncated, info = self.env.step(action)
+        for _ in range(self.frames_per_batch):
+            obs_t = torch.tensor(obs, dtype=torch.float32).unsqueeze(0).to(self.device)
+            with torch.no_grad():
+                action, log_prob, value = self.model.get_action(obs_t, self.env.Fmax)
+
+            action_np = action.cpu().numpy()[0]
+
+            next_obs, reward, terminated, truncated, info = self.env.step(action_np)
             done = terminated or truncated
 
             obs_list.append(obs)
-            actions.append(action)
+            actions.append(action_np)
             log_probs.append(log_prob.cpu().numpy())
             rewards.append(reward)
             dones.append(done)
             values.append(value.cpu().numpy())
 
             obs = next_obs
-
             if done:
                 obs, _ = self.env.reset()
 
@@ -110,15 +111,13 @@ class PPO_Agent:
             next_value = values[t + 1] if t + 1 < len(rewards) else 0
             delta = rewards[t] + self.gamma * next_value * next_non_terminal - values[t]
             adv[t] = last_gae_lam = delta + self.gamma * self.lam * next_non_terminal * last_gae_lam
-
         returns = adv + values
         return adv, returns
 
     def train(self):
         frame_count = 0
         while frame_count < self.total_frames:
-            (
-                obs_list,
+            (   obs_list,
                 actions,
                 old_log_probs,
                 rewards,
@@ -127,7 +126,6 @@ class PPO_Agent:
             ) = self.collect_batch()
 
             advantages, returns = self.compute_gae(rewards, values, dones)
-
             advantages = (advantages - advantages.mean()) / (advantages.std() + 0.00001)
 
             dataset_size = len(obs_list)
@@ -139,25 +137,24 @@ class PPO_Agent:
                     end = start + self.minibatch_size
                     batch_idx = idxs[start:end]
 
-                    obs_t = torch.tensor(obs_list[batch_idx]).to(self.device)
-                    actions_t = torch.tensor(actions[batch_idx]).to(self.device)
-                    old_log_probs_t = torch.tensor(old_log_probs[batch_idx]).to(self.device)
-                    adv_t = torch.tensor(advantages[batch_idx]).to(self.device)
-                    ret_t = torch.tensor(returns[batch_idx]).to(self.device)
+                    obs_t = torch.tensor(obs_list[batch_idx], dtype=torch.float32).to(self.device)
+                    actions_t = torch.tensor(actions[batch_idx], dtype=torch.float32).to(self.device)
+                    old_log_probs_t = torch.tensor(old_log_probs[batch_idx], dtype=torch.float32).to(self.device)
+                    adv_t = torch.tensor(advantages[batch_idx], dtype=torch.float32).to(self.device)
+                    ret_t = torch.tensor(returns[batch_idx], dtype=torch.float32).to(self.device)
 
                     mean, value = self.model(obs_t)
+                    mean = torch.sigmoid(mean) * self.env.Fmax
                     std = self.model.log_std.exp()
                     dist = torch.distributions.Normal(mean, std)
                     new_log_prob = dist.log_prob(actions_t).sum(-1)
 
                     ratio = (new_log_prob - old_log_probs_t).exp()
-
                     surr1 = ratio * adv_t
                     surr2 = torch.clamp(ratio, 1.0 - self.clip_epsilon, 1.0 + self.clip_epsilon) * adv_t
                     policy_loss = -torch.min(surr1, surr2).mean()
 
                     value_loss = (ret_t - value.squeeze()).pow(2).mean()
-
                     entropy = dist.entropy().sum(-1).mean()
 
                     loss = policy_loss + 0.5 * value_loss - 0.01 * entropy
@@ -169,10 +166,7 @@ class PPO_Agent:
                 frame_count += self.frames_per_batch
                 print(f"Frames: {frame_count}/{self.total_frames}")
 
-    def run(self, env_params=None, episodes = 1):
-        if env_params is None:
-            self.env = env_params
-
+    def run(self, episodes = 1):
         all_episodes = []
 
         for ep in range(episodes):
@@ -190,10 +184,12 @@ class PPO_Agent:
             }
 
             while not done:
-                obs_t = torch.tensor(obs).to(self.device)
+                obs_t = torch.tensor(obs, dtype=torch.float32).unsqueeze(0).to(self.device)
                 with torch.no_grad():
-                    mean, _ = self.model(obs_t.unsqueeze(0))
-                action = mean.cpu().numpy()[0]
+                    mean, _ = self.model(obs_t)
+                    action = torch.sigmoid(mean) * self.env.Fmax
+                action = action.cpu().numpy()[0]
+                print(action)
 
                 obs, reward, terminated, truncated, info = self.env.step(action)
                 done = terminated or truncated
@@ -210,7 +206,5 @@ class PPO_Agent:
             print(f"Episode: {ep}, Reward: {total_reward}")
 
         return all_episodes
-
-
 
 

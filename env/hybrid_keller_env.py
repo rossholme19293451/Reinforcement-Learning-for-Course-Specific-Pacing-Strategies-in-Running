@@ -16,12 +16,12 @@ class hybrid_keller_env(gym.Env):
         dRw, #distance Reward weight
         eRw, #energy Reward weight
         dt = 1.0, #s
-        max_time = 3*3600
+        max_time = 3*3600,
+        v_max = 13.0
     ):
 
         super().__init__()
         self.elevation_profile = np.array(elevation_profile)
-
         self.distances = self.elevation_profile[:, 0]
         self.elevations = self.elevation_profile[:, 1]
 
@@ -43,14 +43,19 @@ class hybrid_keller_env(gym.Env):
         self.recovery_rate = 1 - np.exp(-dt/tau)
         self.dRw = float(dRw)
         self.eRw = float(eRw)
+        self.v_max = float(v_max)
 
         # 0 <= f(t) <= Fmax
-        self.action_space = spaces.Box(low = np.array([0.0]), high = np.array([self.Fmax]), dtype=np.float32)
+        self.action_space = spaces.Box(
+            low = np.array([0.0], dtype=np.float32),
+            high = np.array([self.Fmax], dtype=np.float32),
+            dtype=np.float32)
 
-        #0 <= distance <= total_distance, 0 <= velocity, 0 <= energy <= E0
-        high = np.array([self.total_distance, np.finfo(np.float32).max, self.E0], dtype=np.float32)
-        low = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-        self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
+        #observation space normalised
+        self.observation_space = spaces.Box(
+            low=np.array([0.0, 0.0, 0.0], dtype=np.float32),
+            high=np.array([1.0, 1.0, 1.0], dtype=np.float32),
+            dtype=np.float32)
 
         self.reset()
 
@@ -60,12 +65,21 @@ class hybrid_keller_env(gym.Env):
         self.velocity = 0.0
         self.energy = self.E0
         self.time = 0.0
-        obs = np.array([self.distance, self.velocity, self.energy], dtype=np.float32)
+        obs = self._get_obs()
         info = {}
         return obs, info
 
     def _get_grade(self, distance):
         return float(np.interp(distance, self.distances, self.grades))
+
+    def _get_obs(self):
+        distance_norm = self.distance / self.total_distance
+        velocity_norm = self.velocity / self.v_max
+        energy_norm = self.energy / self.E0
+        return np.clip(
+            np.array([distance_norm, velocity_norm, energy_norm], dtype=np.float32),
+            0.0, 1.0
+        )
 
     def step(self, action):
         f = float(np.clip(action, 0.0, self.Fmax))
@@ -94,15 +108,16 @@ class hybrid_keller_env(gym.Env):
         terminated = self.distance >= self.total_distance
         truncated = self.energy <= 0.0 or self.time > self.max_time
 
-        #reward
-        if terminated:
-            reward = - (self.eRw * self.energy)
-        elif truncated:
-            reward = self.dRw * (self.distance - self.total_distance)
-        else:
-            reward = -0.1
+        reward = self.velocity * 0.1
 
-        obs = np.array([self.distance, self.velocity, self.energy], dtype=np.float32)
+        if terminated:
+            reward += 100
+            reward -= self.eRw * (self.energy / self.E0)
+
+        if truncated:
+            reward -= 50
+
+        obs = self._get_obs()
         info = {"time": self.time, "grade": grade}
         return obs, reward, terminated, truncated, info
 

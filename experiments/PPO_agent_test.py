@@ -9,14 +9,14 @@ Fmax = 12.2  #m/s^2
 sigma = 41.54  #j/(kg*s)
 E0 = 2405.8 #j/kg
 tau = 337 #s
-dRw = 1.0
-eRw = 1.0
+dRw = 100.0
+eRw = 100.0
 
 env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, dRw, eRw)
 
 agent = PPO_Agent(env, device="cpu")
 agent.train()
-episodes_data = agent.run(env)
+episodes_data = agent.run()
 
 for ep_data in episodes_data:
     rewards = ep_data["reward"]
@@ -29,9 +29,11 @@ plt.show()
 
 ep_data = episodes_data[0]
 
-distances = ep_data["distance"]
-velocities = ep_data["velocity"]
-energies = ep_data["energy"]
+distances = np.array(ep_data["distance"]) * env.total_distance
+velocities = np.array(ep_data["velocity"]) * env.v_max
+energies = np.array(ep_data["energy"]) * env.E0
+
+print(f"Distance reached: {distances[-1]}, Timestep: {len(distances)}")
 
 elevations = np.interp(distances, profile[:, 0], profile[:, 1])
 
