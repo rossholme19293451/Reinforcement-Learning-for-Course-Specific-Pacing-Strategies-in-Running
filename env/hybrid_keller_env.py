@@ -82,7 +82,7 @@ class hybrid_keller_env(gym.Env):
         )
 
     def step(self, action):
-        f = float(np.clip(action, 0.0, self.Fmax))
+        f = float(action)
 
         grade = self._get_grade(self.distance)
         grade_effect = self.g * grade
@@ -108,14 +108,14 @@ class hybrid_keller_env(gym.Env):
         terminated = self.distance >= self.total_distance
         truncated = self.energy <= 0.0 or self.time > self.max_time
 
-        reward = self.velocity * 0.1
+        if self.distance < self.total_distance:
+            reward = (1/self.time) * (self.total_distance / (self.total_distance - self.distance))
 
         if terminated:
-            reward += 100
-            reward -= self.eRw * (self.energy / self.E0)
+            reward = (1/self.time) * (1/0.01)
 
         if truncated:
-            reward -= 50
+            reward = 0
 
         obs = self._get_obs()
         info = {"time": self.time, "grade": grade}

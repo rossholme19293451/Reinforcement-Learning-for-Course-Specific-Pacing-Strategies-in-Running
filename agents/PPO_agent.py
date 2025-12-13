@@ -17,7 +17,7 @@ class ActorCritic(nn.Module):
         self.policy_head = nn.Linear(256, action_dim)
         self.value_head = nn.Linear(256, 1)
 
-        self.log_std = nn.Parameter(torch.zeros(action_dim) - 0.5)
+        self.log_std = nn.Parameter(torch.zeros(action_dim) - 2.0)
 
     def forward(self, x):
         h = self.net(x)
@@ -25,13 +25,16 @@ class ActorCritic(nn.Module):
 
     def get_action(self, obs, Fmax):
         mean, value = self.forward(obs)
-        mean = torch.sigmoid(mean) * Fmax
-
         std = self.log_std.exp()
-        dist = torch.distributions.Normal(mean, std)
-        action = dist.rsample()
-        log_prob = dist.log_prob(action).sum(-1)
-        return action, log_prob, value
+        normal = torch.distributions.Normal(mean, std)
+        z = normal.rsample()
+        action = torch.tanh(z)
+        action_scaled = (action + 1) / 2 * Fmax
+
+        log_prob = normal.log_prob(z) - torch.log(1 - action.pow(2) + 1e-6)
+        log_prob = log_prob.sum(-1)
+
+        return action_scaled, log_prob, value
 
 class PPO_Agent:
     def __init__(
@@ -85,14 +88,19 @@ class PPO_Agent:
 
             obs_list.append(obs)
             actions.append(action_np)
-            log_probs.append(log_prob.cpu().numpy())
+            log_probs.append(log_prob.cpu().item())
             rewards.append(reward)
             dones.append(done)
-            values.append(value.cpu().numpy())
+            values.append(value.cpu().item())
 
             obs = next_obs
             if done:
                 obs, _ = self.env.reset()
+
+        obs_t = torch.tensor(obs, dtype=torch.float32).unsqueeze(0).to(self.device)
+        with torch.no_grad():
+            last_value = self.model(obs_t)[1].cpu().item()
+        values.append(last_value)
 
         return (np.array(obs_list),
                 np.array(actions),
@@ -108,10 +116,10 @@ class PPO_Agent:
 
         for t in reversed(range(len(rewards))):
             next_non_terminal = 1.0 - dones[t]
-            next_value = values[t + 1] if t + 1 < len(rewards) else 0
+            next_value = values[t + 1]
             delta = rewards[t] + self.gamma * next_value * next_non_terminal - values[t]
             adv[t] = last_gae_lam = delta + self.gamma * self.lam * next_non_terminal * last_gae_lam
-        returns = adv + values
+        returns = adv + values[:-1]
         return adv, returns
 
     def train(self):
@@ -144,10 +152,10 @@ class PPO_Agent:
                     ret_t = torch.tensor(returns[batch_idx], dtype=torch.float32).to(self.device)
 
                     mean, value = self.model(obs_t)
-                    mean = torch.sigmoid(mean) * self.env.Fmax
-                    std = self.model.log_std.exp()
-                    dist = torch.distributions.Normal(mean, std)
-                    new_log_prob = dist.log_prob(actions_t).sum(-1)
+                    std = torch.clamp(self.model.log_std.exp(), 0.001, 1.0)
+                    normal = torch.distributions.Normal(mean, std)
+                    z = torch.atanh(actions_t / self.env.Fmax * 2 - 1)
+                    new_log_prob = (normal.log_prob(z) - torch.log(1 - torch.tanh(z).pow(2) + 1e-6)).sum(-1)
 
                     ratio = (new_log_prob - old_log_probs_t).exp()
                     surr1 = ratio * adv_t
@@ -155,7 +163,7 @@ class PPO_Agent:
                     policy_loss = -torch.min(surr1, surr2).mean()
 
                     value_loss = (ret_t - value.squeeze()).pow(2).mean()
-                    entropy = dist.entropy().sum(-1).mean()
+                    entropy = normal.entropy().sum(-1).mean()
 
                     loss = policy_loss + 0.5 * value_loss - 0.01 * entropy
 
@@ -186,8 +194,7 @@ class PPO_Agent:
             while not done:
                 obs_t = torch.tensor(obs, dtype=torch.float32).unsqueeze(0).to(self.device)
                 with torch.no_grad():
-                    mean, _ = self.model(obs_t)
-                    action = torch.sigmoid(mean) * self.env.Fmax
+                    action, _, _ = self.model.get_action(obs_t, self.env.Fmax)
                 action = action.cpu().numpy()[0]
                 print(action)
 
