@@ -29,20 +29,19 @@ class ActorCritic(nn.Module):
         normal = torch.distributions.Normal(mean, std)
         z = normal.rsample()
         action = torch.tanh(z)
-        action_scaled = (action + 1) / 2 * Fmax
 
         log_prob = normal.log_prob(z) - torch.log(1 - action.pow(2) + 1e-6)
         log_prob = log_prob.sum(-1)
 
-        return action_scaled, log_prob, value
+        return action, log_prob, value
 
 class PPO_Agent:
     def __init__(
             self,
             env_fn,
             device,
-            frames_per_batch = 4096,
-            total_frames = 500_000,
+            frames_per_batch = 10_240,
+            total_frames = 1_000_000,
             gamma = 0.99,
             lam = 0.95,
             clip_epsilon = 0.2,
@@ -154,8 +153,7 @@ class PPO_Agent:
                     mean, value = self.model(obs_t)
                     std = torch.clamp(self.model.log_std.exp(), 0.001, 1.0)
                     normal = torch.distributions.Normal(mean, std)
-                    z = torch.atanh(actions_t / self.env.Fmax * 2 - 1)
-                    new_log_prob = (normal.log_prob(z) - torch.log(1 - torch.tanh(z).pow(2) + 1e-6)).sum(-1)
+                    new_log_prob = (normal.log_prob(torch.atanh(actions_t)) - torch.log(1 - actions_t.pow(2) + 1e-6)).sum(-1)
 
                     ratio = (new_log_prob - old_log_probs_t).exp()
                     surr1 = ratio * adv_t
@@ -196,9 +194,11 @@ class PPO_Agent:
                 with torch.no_grad():
                     action, _, _ = self.model.get_action(obs_t, self.env.Fmax)
                 action = action.cpu().numpy()[0]
-                print(action)
+                print(f"Force = {action}")
 
                 obs, reward, terminated, truncated, info = self.env.step(action)
+                print(info)
+                self.env.render()
                 done = terminated or truncated
                 total_reward += reward
 

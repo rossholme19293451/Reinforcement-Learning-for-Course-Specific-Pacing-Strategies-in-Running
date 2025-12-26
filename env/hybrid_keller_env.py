@@ -15,9 +15,10 @@ class hybrid_keller_env(gym.Env):
         tau, #s
         dRw, #distance Reward weight
         eRw, #energy Reward weight
-        dt = 1.0, #s
+        dt = 0.2, #s
         max_time = 3*3600,
-        v_max = 13.0
+        v_max = 13.0,
+        grade_max = 0.35,
     ):
 
         super().__init__()
@@ -44,6 +45,7 @@ class hybrid_keller_env(gym.Env):
         self.dRw = float(dRw)
         self.eRw = float(eRw)
         self.v_max = float(v_max)
+        self.grade_max = float(grade_max)
 
         # 0 <= f(t) <= Fmax
         self.action_space = spaces.Box(
@@ -53,8 +55,8 @@ class hybrid_keller_env(gym.Env):
 
         #observation space normalised
         self.observation_space = spaces.Box(
-            low=np.array([0.0, 0.0, 0.0], dtype=np.float32),
-            high=np.array([1.0, 1.0, 1.0], dtype=np.float32),
+            low=np.array([0.0, 0.0, 0.0, -1.0], dtype=np.float32),
+            high=np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
             dtype=np.float32)
 
         self.reset()
@@ -73,16 +75,21 @@ class hybrid_keller_env(gym.Env):
         return float(np.interp(distance, self.distances, self.grades))
 
     def _get_obs(self):
-        distance_norm = self.distance / self.total_distance
-        velocity_norm = self.velocity / self.v_max
-        energy_norm = self.energy / self.E0
+        distance_scaled = self.distance / self.total_distance
+        velocity_scaled = self.velocity / self.v_max
+        energy_scaled = self.energy / self.E0
+        grade_scaled = self._get_grade(self.distance) / self.grade_max
         return np.clip(
-            np.array([distance_norm, velocity_norm, energy_norm], dtype=np.float32),
-            0.0, 1.0
+            np.array(
+                [distance_scaled, velocity_scaled, energy_scaled, grade_scaled], dtype=np.float32
+            ),
+            [0.0, 0.0, 0.0, -1.0],
+            [1.0, 1.0, 1.0, 1.0]
         )
 
     def step(self, action):
-        f = float(action)
+        action = float(action)
+        f = (action + 1.0) / 2 * self.Fmax
 
         grade = self._get_grade(self.distance)
         grade_effect = self.g * grade

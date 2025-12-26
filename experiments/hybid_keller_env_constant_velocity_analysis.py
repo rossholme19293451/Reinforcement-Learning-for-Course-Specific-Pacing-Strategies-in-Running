@@ -29,16 +29,20 @@ while not done:
     f = v_target / env.r + env.g * current_grade
     f = np.clip(f, 0.0, env.Fmax)
 
-    action = [f]
+    action = f
     obs, temp_reward, terminated, truncated, info = env.step(action)
     print(info)
     env.render()
 
-    distances.append(obs[0])
-    velocities.append(obs[1])
-    energies.append(obs[2])
+    distance = obs[0] * env.total_distance
+    velocity = obs[1] * env.v_max
+    energy = obs[2] * env.E0
 
-    elevations.append(np.interp(obs[0], profile[:,0], profile[:,1]))
+    distances.append(distance)
+    velocities.append(velocity)
+    energies.append(energy)
+
+    elevations.append(np.interp(distance, profile[:,0], profile[:,1]))
 
     reward += temp_reward
     print(f"Cumulative Reward: {reward}")

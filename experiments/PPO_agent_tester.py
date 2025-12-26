@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+from scipy.signal import savgol_filter
+
 from env.hybrid_keller_env import *
 from agents.PPO_agent import *
 
@@ -30,10 +32,21 @@ plt.show()
 ep_data = episodes_data[0]
 
 distances = np.array(ep_data["distance"]) * env.total_distance
+
 velocities = np.array(ep_data["velocity"]) * env.v_max
+velocities = savgol_filter(velocities, window_length=500, polyorder=3)
+
 energies = np.array(ep_data["energy"]) * env.E0
 
-print(f"Distance reached: {distances[-1]}, Timestep: {len(distances)}, Time: {len(distances)/60}")
+actions = []
+for action in np.array(ep_data["action"]):
+    actions.append((float(action) + 1.0) / 2 * env.Fmax)
+
+actions = np.array(actions)
+actions = savgol_filter(actions, window_length=500, polyorder=3)
+print(actions)
+
+print(f"Distance reached: {distances[-1]}, Timestep: {len(distances)/(1/env.dt)}, Time: {len(distances)/60/(1/env.dt)}")
 
 elevations = np.interp(distances, profile[:, 0], profile[:, 1])
 
@@ -82,5 +95,20 @@ ax2.set_ylabel("Energy (J/kg)", color='green')
 ax2.tick_params(axis='y', labelcolor='green')
 
 plt.title("Energy mapped onto Velocity Profile")
+fig.tight_layout()
+plt.show()
+
+# plot force (actions) and elevation
+fig, ax1 = plt.subplots(figsize=(12, 6))
+ax1.plot(distances, elevations, color='red', label="Elevation (m)")
+ax1.set_xlabel("Distance (m)")
+ax1.set_ylabel("Elevation (m)", color='red')
+ax1.tick_params(axis='y', labelcolor='red')
+ax2 = ax1.twinx()
+
+ax2.plot(distances, actions, color='blue', label="Force (m/s)")
+ax2.set_ylabel("Force (m/s)", color='blue')
+ax2.tick_params(axis='y', labelcolor='blue')
+plt.title("Force mapped onto Elevation Profile")
 fig.tight_layout()
 plt.show()
