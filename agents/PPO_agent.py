@@ -40,7 +40,7 @@ class PPO_Agent:
             self,
             env_fn,
             device,
-            frames_per_batch = 10_240,
+            frames_per_batch = 8_192,
             total_frames = 1_000_000,
             gamma = 0.99,
             lam = 0.95,

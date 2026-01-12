@@ -116,13 +116,13 @@ class hybrid_keller_env(gym.Env):
         truncated = self.energy <= 0.0 or self.time > self.max_time
 
         if self.distance < self.total_distance:
-            reward = (1/self.time) * (self.total_distance / (self.total_distance - self.distance))
+            reward = -0.0001
 
         if terminated:
-            reward = (1/self.time) * (1/0.01)
+            reward = 1
 
         if truncated:
-            reward = 0
+            reward = -1
 
         obs = self._get_obs()
         info = {"time": self.time, "grade": grade}
