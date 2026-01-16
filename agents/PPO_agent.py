@@ -17,15 +17,15 @@ class ActorCritic(nn.Module):
         self.policy_head = nn.Linear(256, action_dim)
         self.value_head = nn.Linear(256, 1)
 
-        self.log_std = nn.Parameter(torch.zeros(action_dim) - 1.0)
+        self.log_std = nn.Parameter(torch.zeros(action_dim) * 0.5)
 
     def forward(self, x):
         h = self.net(x)
         return self.policy_head(h), self.value_head(h)
 
-    def get_action(self, obs, Fmax):
+    def get_action(self, obs):
         mean, value = self.forward(obs)
-        std = self.log_std.exp()
+        std = torch.clamp(self.log_std.exp(), 0.001, 1.0)
         normal = torch.distributions.Normal(mean, std)
         z = normal.rsample()
         action = torch.tanh(z)
@@ -46,8 +46,8 @@ class PPO_Agent:
             lam = 0.95,
             clip_epsilon = 0.2,
             lr = 0.0005,
-            epochs = 10,
-            minibatch_size = 64,
+            epochs = 3,
+            minibatch_size = 128,
     ):
         self.env = env_fn
         self.frames_per_batch = frames_per_batch
@@ -78,7 +78,7 @@ class PPO_Agent:
         for _ in range(self.frames_per_batch):
             obs_t = torch.tensor(obs, dtype=torch.float32).unsqueeze(0).to(self.device)
             with torch.no_grad():
-                action, log_prob, value = self.model.get_action(obs_t, self.env.Fmax)
+                action, log_prob, value = self.model.get_action(obs_t)
 
             action_np = action.cpu().numpy()[0]
 
@@ -135,7 +135,7 @@ class PPO_Agent:
             old_values = values[:-1]
 
             advantages, returns = self.compute_gae(rewards, values, dones)
-            advantages = (advantages - advantages.mean()) / (advantages.std() + 0.00001)
+            advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-6)
 
             dataset_size = len(obs_list)
             for epoch in range(self.epochs):
@@ -208,7 +208,7 @@ class PPO_Agent:
             while not done:
                 obs_t = torch.tensor(obs, dtype=torch.float32).unsqueeze(0).to(self.device)
                 with torch.no_grad():
-                    action, _, _ = self.model.get_action(obs_t, self.env.Fmax)
+                    action, _, _ = self.model.get_action(obs_t)
                 action = action.cpu().numpy()[0]
                 print(f"Force = {action}")
 

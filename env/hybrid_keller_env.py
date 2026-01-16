@@ -87,7 +87,7 @@ class hybrid_keller_env(gym.Env):
         )
 
     def step(self, action):
-        a = float(np.clip(action, -1.0, 1.0))
+        a = float(np.clip(action[0], -1.0, 1.0))
         f = (a + 1.0) / 2 * self.Fmax
 
         grade = self._get_grade(self.distance)
