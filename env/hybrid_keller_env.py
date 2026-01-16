@@ -13,8 +13,7 @@ class hybrid_keller_env(gym.Env):
         sigma, #j/(kg*s)
         E0, #j/kg
         tau, #s
-        dRw, #distance Reward weight
-        eRw, #energy Reward weight
+        k, #reward weight
         dt = 0.2, #s
         max_time = 3*3600,
         v_max = 13.0,
@@ -42,8 +41,7 @@ class hybrid_keller_env(gym.Env):
         self.dt = float(dt)
         self.g = float(g)
         self.recovery_rate = 1 - np.exp(-dt/tau)
-        self.dRw = float(dRw)
-        self.eRw = float(eRw)
+        self.k = float(k)
         self.v_max = float(v_max)
         self.grade_max = float(grade_max)
 
@@ -115,14 +113,18 @@ class hybrid_keller_env(gym.Env):
         terminated = self.distance >= self.total_distance
         truncated = self.energy <= 0.0 or self.time > self.max_time
 
-        if self.distance < self.total_distance:
-            reward = -0.0001
+        #reward
+        reward = -self.dt
 
+        #success
         if terminated:
-            reward = 1
+            reward += 50
+            reward += -self.k * (self.energy / self.E0) ** 2
 
-        if truncated:
-            reward = -1
+        #failure
+        if truncated and not terminated:
+            reward = -100.0
+
 
         obs = self._get_obs()
         info = {"time": self.time, "grade": grade}

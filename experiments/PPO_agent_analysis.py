@@ -11,10 +11,9 @@ Fmax = 12.2  # m/s^2
 sigma = 41.54  # j/(kg*s)
 E0 = 2405.8  # j/kg
 tau = 337  # s
-dRw = 10.0
-eRw = 100.0
+k = 15
 
-env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, dRw, eRw)
+env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, k)
 
 agent = PPO_Agent(env, device="cpu")
 agent.train()

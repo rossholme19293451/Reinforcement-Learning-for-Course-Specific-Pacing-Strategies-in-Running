@@ -17,7 +17,7 @@ class ActorCritic(nn.Module):
         self.policy_head = nn.Linear(256, action_dim)
         self.value_head = nn.Linear(256, 1)
 
-        self.log_std = nn.Parameter(torch.zeros(action_dim) - 2.0)
+        self.log_std = nn.Parameter(torch.zeros(action_dim) - 1.0)
 
     def forward(self, x):
         h = self.net(x)
@@ -40,8 +40,8 @@ class PPO_Agent:
             self,
             env_fn,
             device,
-            frames_per_batch = 8_192,
-            total_frames = 1_000_000,
+            frames_per_batch = 4_096,
+            total_frames = 125_000,
             gamma = 0.99,
             lam = 0.95,
             clip_epsilon = 0.2,

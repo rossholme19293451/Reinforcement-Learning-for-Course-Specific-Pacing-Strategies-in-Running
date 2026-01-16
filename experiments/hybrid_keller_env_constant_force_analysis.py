@@ -8,10 +8,9 @@ Fmax = 12.2  #m/s^2
 sigma = 41.54  #j/(kg*s)
 E0 = 2405.8 #j/kg
 tau = 337 #s
-dRw = 1.0
-eRw = 1.0
+k = 10
 
-env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, dRw, eRw)
+env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, k)
 
 obs, _ = env.reset()
 done = False
