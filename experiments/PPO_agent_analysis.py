@@ -39,7 +39,7 @@ energies = np.array(ep_data["energy"]) * env.E0
 
 actions = []
 for action in np.array(ep_data["action"]):
-    actions.append((float(action) + 1.0) / 2 * env.Fmax)
+    actions.append((action[0] + 1.0) / 2 * env.Fmax)
 
 actions = np.array(actions)
 actions = savgol_filter(actions, window_length=500, polyorder=3)

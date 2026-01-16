@@ -41,7 +41,7 @@ class PPO_Agent:
             env_fn,
             device,
             frames_per_batch = 4_096,
-            total_frames = 125_000,
+            total_frames = 250_000,
             gamma = 0.99,
             lam = 0.95,
             clip_epsilon = 0.2,
@@ -132,6 +132,8 @@ class PPO_Agent:
                 values,
             ) = self.collect_batch()
 
+            old_values = values[:-1]
+
             advantages, returns = self.compute_gae(rewards, values, dones)
             advantages = (advantages - advantages.mean()) / (advantages.std() + 0.00001)
 
@@ -149,28 +151,42 @@ class PPO_Agent:
                     old_log_probs_t = torch.tensor(old_log_probs[batch_idx], dtype=torch.float32).to(self.device)
                     adv_t = torch.tensor(advantages[batch_idx], dtype=torch.float32).to(self.device)
                     ret_t = torch.tensor(returns[batch_idx], dtype=torch.float32).to(self.device)
+                    old_values_t = torch.tensor(old_values[batch_idx], dtype=torch.float32).to(self.device)
 
                     mean, value = self.model(obs_t)
+                    value = value.squeeze()
+
                     std = torch.clamp(self.model.log_std.exp(), 0.001, 1.0)
                     normal = torch.distributions.Normal(mean, std)
-                    new_log_prob = (normal.log_prob(torch.atanh(actions_t)) - torch.log(1 - actions_t.pow(2) + 1e-6)).sum(-1)
+
+                    actions_clipped = torch.clamp(actions_t, -1.0 + 1e-6, 1.0 - 1e-6)
+                    z = torch.atanh(actions_clipped)
+                    new_log_prob = (normal.log_prob(z) - torch.log(1 - actions_t.pow(2) + 1e-6)).sum(-1)
 
                     ratio = (new_log_prob - old_log_probs_t).exp()
+
                     surr1 = ratio * adv_t
                     surr2 = torch.clamp(ratio, 1.0 - self.clip_epsilon, 1.0 + self.clip_epsilon) * adv_t
+
                     policy_loss = -torch.min(surr1, surr2).mean()
 
-                    value_loss = (ret_t - value.squeeze()).pow(2).mean()
+                    value_clipped = old_values_t + torch.clamp(value - old_values_t, -self.clip_epsilon, self.clip_epsilon)
+
+                    value_loss_unclipped = (ret_t - value).pow(2)
+                    value_loss_clipped = (ret_t - value_clipped).pow(2)
+
+                    value_loss = torch.max(value_loss_unclipped, value_loss_clipped).mean()
+
                     entropy = normal.entropy().sum(-1).mean()
 
-                    loss = policy_loss + 0.5 * value_loss - 0.01 * entropy
+                    loss = policy_loss + 0.5 * value_loss - 0.001 * entropy
 
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
 
-                frame_count += self.frames_per_batch
-                print(f"Frames: {frame_count}/{self.total_frames}")
+            frame_count += self.frames_per_batch
+            print(f"Frames: {frame_count}/{self.total_frames}")
 
     def run(self, episodes = 1):
         all_episodes = []
