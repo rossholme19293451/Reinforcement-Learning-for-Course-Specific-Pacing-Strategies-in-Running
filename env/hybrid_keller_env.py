@@ -43,7 +43,7 @@ class hybrid_keller_env(gym.Env):
         self.recovery_rate = 1 - np.exp(-dt/tau)
         self.k = float(k)
         self.v_max = float(v_max)
-        self.grade_max = float(grade_max)
+        self.grade_max = np.max(np.abs(self.grades))
 
 
         self.action_space = spaces.Box(
@@ -115,7 +115,7 @@ class hybrid_keller_env(gym.Env):
         truncated = self.energy <= 0.0 or self.time > self.max_time
 
         #reward
-        reward = -self.dt
+        reward = -0.005 * self.dt
 
         #success
         if terminated:

@@ -11,13 +11,18 @@ class ActorCritic(nn.Module):
             nn.Linear(obs_dim, 256),
             nn.ReLU(),
             nn.Linear(256, 256),
-            nn.ReLU(),
+            nn.ReLU()
         )
 
         self.policy_head = nn.Linear(256, action_dim)
         self.value_head = nn.Linear(256, 1)
 
-        self.log_std = nn.Parameter(torch.zeros(action_dim) * 0.5)
+        for layer in list(self.net) + [self.policy_head, self.value_head]:
+            if isinstance(layer, nn.Linear):
+                nn.init.kaiming_uniform_(layer.weight, mode='fan_in', nonlinearity='relu')
+                nn.init.zeros_(layer.bias)
+
+        self.log_std = nn.Parameter(torch.zeros(action_dim) * 1.0)
 
     def forward(self, x):
         h = self.net(x)
@@ -40,8 +45,8 @@ class PPO_Agent:
             self,
             env_fn,
             device,
-            frames_per_batch = 4_096,
-            total_frames = 250_000,
+            frames_per_batch = 54_000,
+            total_frames = 540_000,
             gamma = 0.99,
             lam = 0.95,
             clip_epsilon = 0.2,
@@ -187,6 +192,7 @@ class PPO_Agent:
 
             frame_count += self.frames_per_batch
             print(f"Frames: {frame_count}/{self.total_frames}")
+            print(len(rewards), " ", rewards.sum())
 
     def run(self, episodes = 1):
         all_episodes = []

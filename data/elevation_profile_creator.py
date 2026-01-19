@@ -44,12 +44,12 @@ def save_csv(filename, dists, elevs):
 
 if __name__ == "__main__":
     # load gpx file
-    with open("course_GPXs/Meduno_Vetical.gpx", "r") as f:
+    with open("course_GPXs/2km_loop.gpx", "r") as f:
         gpx = gpxpy.parse(f)
 
     dists, elevs = parse_GPX_to_points(gpx)
     new_dists, new_elevs = resample_to_1m(dists, elevs)
-    filename = "../data/elevation_profiles/Meduno_Vetical.csv"
+    filename = "../data/elevation_profiles/2km_loop.csv"
     save_csv(filename, new_dists, new_elevs)
 
     import matplotlib.pyplot as plt
