@@ -15,24 +15,25 @@ env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, k)
 obs, _ = env.reset()
 done = False
 
-distances, velocities, energies, elevations= [], [], [], []
+actions, distances, velocities, energies, elevations= [], [], [], [], []
 reward = 0
 
 v_target = 6.1027
 
 while not done:
     #get current grade
-    current_grade = np.interp(obs[0], profile[:,0], env.grades)
+    current_grade = np.interp(obs[0] * env.total_distance, profile[:,0], env.grades)
 
     #compute force for constant velocity
     f = v_target / env.r + env.g * current_grade
     f = np.clip(f, 0.0, env.Fmax)
 
-    action = f
+    action = [(f / Fmax * 2) - 1.0]
     obs, temp_reward, terminated, truncated, info = env.step(action)
     print(info)
     env.render()
 
+    actions.append(f)
     distance = obs[0] * env.total_distance
     velocity = obs[1] * env.v_max
     energy = obs[2] * env.E0
@@ -95,6 +96,22 @@ ax2.set_ylabel("Energy (J/kg)", color='green')
 ax2.tick_params(axis='y', labelcolor='green')
 
 plt.title("Energy mapped onto Velocity Profile")
+fig.tight_layout()
+plt.show()
+
+# plot force (actions) and elevation
+fig, ax1 = plt.subplots(figsize=(12, 6))
+ax1.plot(distances, elevations, color='red', label="Elevation (m)")
+ax1.set_xlabel("Distance (m)")
+ax1.set_ylabel("Elevation (m)", color='red')
+ax1.tick_params(axis='y', labelcolor='red')
+ax2 = ax1.twinx()
+
+ax2.plot(distances, actions, color='blue', label="Force (m/s)")
+ax2.set_ylabel("Force (m/s)", color='blue')
+ax2.tick_params(axis='y', labelcolor='blue')
+
+plt.title("Force mapped onto Elevation Profile")
 fig.tight_layout()
 plt.show()
 

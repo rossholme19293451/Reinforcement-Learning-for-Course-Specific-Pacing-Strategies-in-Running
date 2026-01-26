@@ -45,8 +45,8 @@ class PPO_Agent:
             self,
             env_fn,
             device,
-            frames_per_batch = 54_000,
-            total_frames = 540_000,
+            frames_per_batch = 18_000,
+            total_frames = 360_000,
             gamma = 0.99,
             lam = 0.95,
             clip_epsilon = 0.2,
@@ -216,9 +216,9 @@ class PPO_Agent:
                 with torch.no_grad():
                     action, _, _ = self.model.get_action(obs_t)
                 action = action.cpu().numpy()[0]
-                print(f"Force = {action}")
 
                 obs, reward, terminated, truncated, info = self.env.step(action)
+                print(f"Force = {action}, Reward = {reward}")
                 print(info)
                 self.env.render()
                 done = terminated or truncated

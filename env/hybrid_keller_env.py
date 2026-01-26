@@ -15,7 +15,7 @@ class hybrid_keller_env(gym.Env):
         tau, #s
         k, #reward weight
         dt = 0.2, #s
-        max_time = 3*3600,
+        max_time = 1*3600,
         v_max = 13.0,
         grade_max = 0.35,
     ):
@@ -115,7 +115,8 @@ class hybrid_keller_env(gym.Env):
         truncated = self.energy <= 0.0 or self.time > self.max_time
 
         #reward
-        reward = -0.005 * self.dt
+        energy_used = min(0.0, dE) #energy used is >= 0.0
+        reward = 0.01 * (dx + energy_used)
 
         #success
         if terminated:

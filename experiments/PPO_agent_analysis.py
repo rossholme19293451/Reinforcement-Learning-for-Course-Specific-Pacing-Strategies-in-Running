@@ -4,14 +4,14 @@ from scipy.signal import savgol_filter
 from env.hybrid_keller_env import *
 from agents.PPO_agent import *
 
-profile = np.loadtxt("../data/elevation_profiles/Ryde_10.csv", delimiter=",", skiprows=1)
+profile = np.loadtxt("../data/elevation_profiles/Brading_10k.csv", delimiter=",", skiprows=1)
 
 r = 0.892  # s
 Fmax = 12.2  # m/s^2
 sigma = 41.54  # j/(kg*s)
 E0 = 2405.8  # j/kg
 tau = 337  # s
-k = 15
+k = 10
 
 env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, k)
 
@@ -108,6 +108,7 @@ ax2 = ax1.twinx()
 ax2.plot(distances, actions, color='blue', label="Force (m/s)")
 ax2.set_ylabel("Force (m/s)", color='blue')
 ax2.tick_params(axis='y', labelcolor='blue')
+
 plt.title("Force mapped onto Elevation Profile")
 fig.tight_layout()
 plt.show()

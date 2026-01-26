@@ -16,19 +16,25 @@ obs, _ = env.reset()
 done = False
 reward = 0
 
-distances, velocities, energies, elevations= [], [], [], []
+actions, distances, velocities, energies, elevations= [], [], [], [], []
 
 while not done:
-    action = [Fmax * 0.561]
+    f = Fmax * 0.56143
+    action = [(f / Fmax * 2) - 1.0]
     obs, temp_reward, terminated, truncated, info = env.step(action)
     print(info)
     env.render()
 
-    distances.append(obs[0])
-    velocities.append(obs[1])
-    energies.append(obs[2])
+    actions.append(f)
+    distance = obs[0] * env.total_distance
+    velocity = obs[1] * env.v_max
+    energy = obs[2] * env.E0
 
-    elevations.append(np.interp(obs[0], profile[:,0], profile[:,1]))
+    distances.append(distance)
+    velocities.append(velocity)
+    energies.append(energy)
+
+    elevations.append(np.interp(distance, profile[:,0], profile[:,1]))
 
     reward += temp_reward
     print(f"Cumulative Reward: {reward}")
@@ -82,5 +88,21 @@ ax2.set_ylabel("Energy (J/kg)", color='green')
 ax2.tick_params(axis='y', labelcolor='green')
 
 plt.title("Energy mapped onto Velocity Profile")
+fig.tight_layout()
+plt.show()
+
+# plot force (actions) and elevation
+fig, ax1 = plt.subplots(figsize=(12, 6))
+ax1.plot(distances, elevations, color='red', label="Elevation (m)")
+ax1.set_xlabel("Distance (m)")
+ax1.set_ylabel("Elevation (m)", color='red')
+ax1.tick_params(axis='y', labelcolor='red')
+ax2 = ax1.twinx()
+
+ax2.plot(distances, actions, color='blue', label="Force (m/s)")
+ax2.set_ylabel("Force (m/s)", color='blue')
+ax2.tick_params(axis='y', labelcolor='blue')
+
+plt.title("Force mapped onto Elevation Profile")
 fig.tight_layout()
 plt.show()
