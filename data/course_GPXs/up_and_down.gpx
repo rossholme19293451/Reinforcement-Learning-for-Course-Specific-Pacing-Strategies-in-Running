@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<gpx version="1.1" creator="GPS Visualizer https://www.gpsvisualizer.com/" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd http://www.garmin.com/xmlschemas/TrackPointExtension/v2 http://www.garmin.com/xmlschemas/TrackPointExtensionv2.xsd http://www.garmin.com/xmlschemas/GpxExtensions/v3 http://www.garmin.com/xmlschemas/GpxExtensionsv3.xsd" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v2" xmlns:gpxx="http://www.garmin.com/xmlschemas/GpxExtensions/v3">
+<trk>
+  <name>Up and Down the Hill</name>
+  <trkseg>
+    <trkpt lat="51.751931" lon="-1.237046">
+      <ele>61.621</ele>
+    </trkpt>
+    <trkpt lat="51.752066" lon="-1.236792">
+      <ele>62.24</ele>
+    </trkpt>
+    <trkpt lat="51.752264" lon="-1.23636">
+      <ele>62.954</ele>
+    </trkpt>
+    <trkpt lat="51.752486" lon="-1.235767">
+      <ele>64.227</ele>
+    </trkpt>
+    <trkpt lat="51.752644" lon="-1.235341">
+      <ele>65.654</ele>
+    </trkpt>
+    <trkpt lat="51.752783" lon="-1.23489">
+      <ele>66.407</ele>
+    </trkpt>
+    <trkpt lat="51.752799" lon="-1.234838">
+      <ele>66.615</ele>
+    </trkpt>
+    <trkpt lat="51.75302" lon="-1.234005">
+      <ele>69.582</ele>
+    </trkpt>
+    <trkpt lat="51.753129" lon="-1.23361">
+      <ele>72.271</ele>
+    </trkpt>
+    <trkpt lat="51.753296" lon="-1.233011">
+      <ele>75.295</ele>
+    </trkpt>
+    <trkpt lat="51.753478" lon="-1.2324">
+      <ele>78.36</ele>
+    </trkpt>
+    <trkpt lat="51.753741" lon="-1.231611">
+      <ele>83.881</ele>
+    </trkpt>
+    <trkpt lat="51.753875" lon="-1.231223">
+      <ele>85.677</ele>
+    </trkpt>
+    <trkpt lat="51.75402" lon="-1.230855">
+      <ele>88.876</ele>
+    </trkpt>
+    <trkpt lat="51.754445" lon="-1.229689">
+      <ele>93.609</ele>
+    </trkpt>
+    <trkpt lat="51.754671" lon="-1.22908">
+      <ele>98.311</ele>
+    </trkpt>
+    <trkpt lat="51.754881" lon="-1.228573">
+      <ele>100.468</ele>
+    </trkpt>
+    <trkpt lat="51.755099" lon="-1.228073">
+      <ele>99.96</ele>
+    </trkpt>
+    <trkpt lat="51.755155" lon="-1.227938">
+      <ele>100.0</ele>
+    </trkpt>
+    <trkpt lat="51.755155" lon="-1.227938">
+      <ele>100.0</ele>
+    </trkpt>
+    <trkpt lat="51.755099" lon="-1.228073">
+      <ele>99.96</ele>
+    </trkpt>
+    <trkpt lat="51.754881" lon="-1.228573">
+      <ele>100.468</ele>
+    </trkpt>
+    <trkpt lat="51.754671" lon="-1.22908">
+      <ele>98.311</ele>
+    </trkpt>
+    <trkpt lat="51.754445" lon="-1.229689">
+      <ele>93.609</ele>
+    </trkpt>
+    <trkpt lat="51.75402" lon="-1.230855">
+      <ele>88.876</ele>
+    </trkpt>
+    <trkpt lat="51.753875" lon="-1.231223">
+      <ele>85.677</ele>
+    </trkpt>
+    <trkpt lat="51.753741" lon="-1.231611">
+      <ele>83.881</ele>
+    </trkpt>
+    <trkpt lat="51.753478" lon="-1.2324">
+      <ele>78.36</ele>
+    </trkpt>
+    <trkpt lat="51.753296" lon="-1.233011">
+      <ele>75.295</ele>
+    </trkpt>
+    <trkpt lat="51.753129" lon="-1.23361">
+      <ele>72.271</ele>
+    </trkpt>
+    <trkpt lat="51.75302" lon="-1.234005">
+      <ele>69.582</ele>
+    </trkpt>
+    <trkpt lat="51.752799" lon="-1.234838">
+      <ele>66.615</ele>
+    </trkpt>
+    <trkpt lat="51.752783" lon="-1.23489">
+      <ele>66.407</ele>
+    </trkpt>
+    <trkpt lat="51.752644" lon="-1.235341">
+      <ele>65.654</ele>
+    </trkpt>
+    <trkpt lat="51.752486" lon="-1.235767">
+      <ele>64.227</ele>
+    </trkpt>
+    <trkpt lat="51.752264" lon="-1.23636">
+      <ele>62.954</ele>
+    </trkpt>
+    <trkpt lat="51.752066" lon="-1.236792">
+      <ele>62.24</ele>
+    </trkpt>
+    <trkpt lat="51.751931" lon="-1.237046">
+      <ele>61.621</ele>
+    </trkpt>
+  </trkseg>
+</trk>
+</gpx>

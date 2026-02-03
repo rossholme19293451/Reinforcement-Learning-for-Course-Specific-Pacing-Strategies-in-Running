@@ -13,7 +13,8 @@ class hybrid_keller_env(gym.Env):
         sigma, #j/(kg*s)
         E0, #j/kg
         tau, #s
-        k, #reward weight
+        sRw, #step reward weight, how much energy use is penalised per step
+        tRw, # terminal reward weight, how much leftover energy is penalised
         dt = 0.2, #s
         max_time = 1*3600,
         v_max = 13.0,
@@ -41,7 +42,8 @@ class hybrid_keller_env(gym.Env):
         self.dt = float(dt)
         self.g = float(g)
         self.recovery_rate = 1 - np.exp(-dt/tau)
-        self.k = float(k)
+        self.sRw = float(sRw)
+        self.tRw = float(tRw)
         self.v_max = float(v_max)
         self.grade_max = np.max(np.abs(self.grades))
 
@@ -116,12 +118,12 @@ class hybrid_keller_env(gym.Env):
 
         #reward
         energy_used = min(0.0, dE) #energy used is >= 0.0
-        reward = 0.01 * (dx + energy_used)
+        reward = 0.01 * (dx + (self.sRw * energy_used))
 
         #success
         if terminated:
             reward += 50
-            reward += -self.k * (self.energy / self.E0) ** 2
+            reward += -self.tRw * (self.energy / self.E0) ** 2
 
         #failure
         if truncated and not terminated:
