@@ -56,8 +56,8 @@ class hybrid_keller_env(gym.Env):
 
         #observation space normalised
         self.observation_space = spaces.Box(
-            low=np.array([0.0, 0.0, 0.0, -1.0], dtype=np.float32),
-            high=np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
+            low=np.array([0.0, 0.0, 0.0, -1.0, 0.0], dtype=np.float32),
+            high=np.array([1.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float32),
             dtype=np.float32)
 
         self.reset()
