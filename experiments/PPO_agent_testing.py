@@ -11,7 +11,7 @@ Fmax = 12.2  # m/s^2
 sigma = 41.54  # j/(kg*s)
 E0 = 2405.8  # j/kg
 tau = 337  # s
-sRw = 0.75
+sRw = 0.67
 tRw = 25
 
 env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, sRw, tRw)
@@ -46,7 +46,12 @@ actions = np.array(actions)
 actions = savgol_filter(actions, window_length=500, polyorder=3)
 print(actions)
 
-print(f"Distance reached: {distances[-1]}, Timestep: {len(distances)/(1/env.dt)}, Time: {len(distances)/60/(1/env.dt)}")
+print(f"Distance reached: {distances[-1]}, Timestep: {ep_data['time'][-1]}, Time: {ep_data['time'][-1]/60}")
+
+print("Mean force:", actions.mean())
+print("Mean velocity:", velocities.mean())
+print("Mean power:", (actions * velocities).mean())
+print("Sigma:", sigma)
 
 elevations = np.interp(distances, profile[:, 0], profile[:, 1])
 
