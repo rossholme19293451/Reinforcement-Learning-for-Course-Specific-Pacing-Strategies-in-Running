@@ -1,7 +1,9 @@
 import matplotlib.pyplot as plt
+from scipy.signal import savgol_filter
+
 from env.hybrid_keller_env import *
 
-profile = np.loadtxt("../data/elevation_profiles/Ryde_10.csv", delimiter=",", skiprows=1)
+profile = np.loadtxt("../data/elevation_profiles/Brading_10k.csv", delimiter=",", skiprows=1)
 
 r = 0.892 #s
 Fmax = 12.2  #m/s^2
@@ -20,7 +22,7 @@ reward = 0
 actions, distances, velocities, energies, elevations= [], [], [], [], []
 
 while not done:
-    f = Fmax * 0.56143
+    f = Fmax * 0.56837
     action = [(f / Fmax * 2) - 1.0]
     obs, temp_reward, terminated, truncated, info = env.step(action)
     print(info)
@@ -43,6 +45,8 @@ while not done:
     done = terminated or truncated
 
 print(f"Finished in {info['time']}s / {info['time']/60} mins")
+
+velocities = savgol_filter(velocities, window_length=500, polyorder=3)
 
 #plot elevation and velocity
 fig, ax1 = plt.subplots(figsize=(12,6))

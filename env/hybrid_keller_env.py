@@ -56,8 +56,8 @@ class hybrid_keller_env(gym.Env):
 
         #observation space normalised
         self.observation_space = spaces.Box(
-            low=np.array([0.0, 0.0, 0.0, -1.0], dtype=np.float32),
-            high=np.array([1.0, 1.0, 1.0, 1.0], dtype=np.float32),
+            low=np.array([0.0, 0.0, 0.0, -1.0, 0.0], dtype=np.float32),
+            high=np.array([1.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float32),
             dtype=np.float32)
 
         self.reset()
@@ -68,6 +68,7 @@ class hybrid_keller_env(gym.Env):
         self.velocity = 0.0
         self.energy = self.E0
         self.time = 0.0
+        self.prev_f = 0.0
         obs = self._get_obs()
         info = {}
         return obs, info
@@ -80,17 +81,23 @@ class hybrid_keller_env(gym.Env):
         velocity_scaled = self.velocity / self.v_max
         energy_scaled = self.energy / self.E0
         grade_scaled = self._get_grade(self.distance) / self.grade_max
+        prev_f_scaled = self.prev_f / self.Fmax
         return np.clip(
             np.array(
-                [distance_scaled, velocity_scaled, energy_scaled, grade_scaled], dtype=np.float32
+                [distance_scaled, velocity_scaled, energy_scaled, grade_scaled, prev_f_scaled], dtype=np.float32
             ),
-            [0.0, 0.0, 0.0, -1.0],
-            [1.0, 1.0, 1.0, 1.0]
+            [0.0, 0.0, 0.0, -1.0, 0.0],
+            [1.0, 1.0, 1.0, 1.0, 1.0]
         )
 
     def step(self, action):
         a = float(np.clip(action[0], -1.0, 1.0))
-        f = (a + 1.0) / 2 * self.Fmax
+        f_raw = (a + 1.0) / 2 * self.Fmax
+
+        alpha = 0.25
+        f = alpha * f_raw + (1 - alpha) * self.prev_f
+
+        self.prev_f = f
 
         grade = self._get_grade(self.distance)
         grade_effect = self.g * grade

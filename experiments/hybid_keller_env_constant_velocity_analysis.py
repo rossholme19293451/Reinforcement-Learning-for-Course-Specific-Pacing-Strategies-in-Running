@@ -1,14 +1,16 @@
 import matplotlib.pyplot as plt
+from scipy.signal import savgol_filter
+
 from env.hybrid_keller_env import *
 
-profile = np.loadtxt("../data/elevation_profiles/Ryde_10.csv", delimiter=",", skiprows=1)
+profile = np.loadtxt("../data/elevation_profiles/Brading_10k.csv", delimiter=",", skiprows=1)
 
 r = 0.892 #s
 Fmax = 12.2  #m/s^2
 sigma = 41.54  #j/(kg*s)
 E0 = 2405.8 #j/kg
 tau = 337 #s
-sRw = 0.95
+sRw = 0.75
 tRw = 25
 
 env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, sRw, tRw)
@@ -19,7 +21,7 @@ done = False
 actions, distances, velocities, energies, elevations= [], [], [], [], []
 reward = 0
 
-v_target = 6.1027
+v_target = 6.1766
 
 while not done:
     #get current grade
@@ -51,6 +53,8 @@ while not done:
     done = terminated or truncated
 
 print(f"Finished in {info['time']}s / {info['time']/60} mins")
+
+actions = savgol_filter(actions, window_length=500, polyorder=3)
 
 #plot elevation and velocity
 fig, ax1 = plt.subplots(figsize=(12,6))
