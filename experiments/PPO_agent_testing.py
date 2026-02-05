@@ -11,8 +11,8 @@ Fmax = 12.2  # m/s^2
 sigma = 41.54  # j/(kg*s)
 E0 = 2405.8  # j/kg
 tau = 337  # s
-sRw = 0.67
-tRw = 25
+sRw = 0.7
+tRw = 35
 
 env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, sRw, tRw)
 
@@ -23,6 +23,7 @@ episodes_data = agent.run()
 for ep_data in episodes_data:
     rewards = ep_data["reward"]
     plt.plot(rewards, label="Episode reward")
+
 plt.xlabel("Timestep")
 plt.ylabel("Reward")
 plt.title("Reward vs Timestep")

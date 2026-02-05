@@ -125,7 +125,7 @@ class hybrid_keller_env(gym.Env):
 
         #reward
         energy_used = min(0.0, dE) #energy used is >= 0.0
-        reward = 0.01 * (dx + (self.sRw * energy_used))
+        reward = 0.015 * (dx + (self.sRw * energy_used))
 
         #success
         if terminated:
