@@ -4,14 +4,14 @@ from scipy.signal import savgol_filter
 from env.hybrid_keller_env import *
 from agents.PPO_agent import *
 
-profile = np.loadtxt("../data/elevation_profiles/Brading_10k.csv", delimiter=",", skiprows=1)
+profile = np.loadtxt("../data/elevation_profiles/flat_1km.csv", delimiter=",", skiprows=1)
 
 r = 0.892  # s
 Fmax = 12.2  # m/s^2
 sigma = 41.54  # j/(kg*s)
 E0 = 2405.8  # j/kg
 tau = 337  # s
-sRw = 0.7
+sRw = 0.40
 tRw = 35
 
 env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, sRw, tRw)
@@ -58,10 +58,11 @@ elevations = np.interp(distances, profile[:, 0], profile[:, 1])
 
 # plot elevation and velocity
 fig, ax1 = plt.subplots(figsize=(12, 6))
-ax1.plot(distances, elevations, color='red', label="Elevation (m)")
+ax1.plot(distances, elevations, color="red", label="Elevation (m)")
 ax1.set_xlabel("Distance (m)")
-ax1.set_ylabel("Elevation (m)", color='red')
-ax1.tick_params(axis='y', labelcolor='red')
+ax1.set_ylabel("Elevation (m)", color="red")
+ax1.tick_params(axis="y", labelcolor="red")
+ax1.grid(True)
 
 ax2 = ax1.twinx()
 ax2.plot(distances, velocities, color='blue', label="Velocity (m/s)")
@@ -78,6 +79,7 @@ ax1.plot(distances, elevations, color='red', label="Elevation (m)")
 ax1.set_xlabel("Distance (m)")
 ax1.set_ylabel("Elevation (m)", color='red')
 ax1.tick_params(axis='y', labelcolor='red')
+ax1.grid(True)
 
 ax2 = ax1.twinx()
 ax2.plot(distances, energies, color='green', label="Energy (J/kg)")
@@ -94,6 +96,7 @@ ax1.plot(distances, velocities, color='blue', label="Velocity (m/s)")
 ax1.set_xlabel("Distance (m)")
 ax1.set_ylabel("Velocity (m/s)", color='blue')
 ax1.tick_params(axis='y', labelcolor='blue')
+ax1.grid(True)
 
 ax2 = ax1.twinx()
 ax2.plot(distances, energies, color='green', label="Energy (J/kg)")
@@ -111,6 +114,7 @@ ax1.set_xlabel("Distance (m)")
 ax1.set_ylabel("Elevation (m)", color='red')
 ax1.tick_params(axis='y', labelcolor='red')
 ax2 = ax1.twinx()
+ax1.grid(True)
 
 ax2.plot(distances, actions, color='blue', label="Force (m/s)")
 ax2.set_ylabel("Force (m/s)", color='blue')

@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 
 
 class ActorCritic(nn.Module):
@@ -128,6 +130,7 @@ class PPO_Agent:
 
     def train(self):
         frame_count = 0
+        training_log = []
         while frame_count < self.total_frames:
             (   obs_list,
                 actions,
@@ -136,7 +139,6 @@ class PPO_Agent:
                 dones,
                 values,
             ) = self.collect_batch()
-
             old_values = values[:-1]
 
             advantages, returns = self.compute_gae(rewards, values, dones)
@@ -190,9 +192,25 @@ class PPO_Agent:
                     loss.backward()
                     self.optimizer.step()
 
+            #print rewards from batch
             frame_count += self.frames_per_batch
             print(f"Frames: {frame_count}/{self.total_frames}")
             print(len(rewards), " ", rewards.sum())
+
+            training_log.append({"Frame_Count": frame_count,
+                                 "Rewards": rewards.sum()})
+
+        #plot rewards
+        df = pd.DataFrame(training_log)
+        print(df.head())
+
+        plt.figure(figsize = (10,5))
+        plt.plot(df["Frame_Count"], df["Rewards"], label="Rewards")
+        plt.xlabel("Frames")
+        plt.ylabel("Total Rewards per Batch")
+        plt.grid(True)
+        plt.show()
+
 
     def run(self, episodes = 1):
         all_episodes = []

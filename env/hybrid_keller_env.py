@@ -18,7 +18,6 @@ class hybrid_keller_env(gym.Env):
         dt = 0.2, #s
         max_time = 1*3600,
         v_max = 13.0,
-        grade_max = 0.35,
     ):
 
         super().__init__()
@@ -45,7 +44,11 @@ class hybrid_keller_env(gym.Env):
         self.sRw = float(sRw)
         self.tRw = float(tRw)
         self.v_max = float(v_max)
-        self.grade_max = np.max(np.abs(self.grades))
+
+        if np.max(np.abs(self.elevations)) > 0:
+            self.grade_max = np.max(np.abs(self.grades))
+        else:
+            self.grade_max = 0.001
 
 
         self.action_space = spaces.Box(
@@ -124,7 +127,7 @@ class hybrid_keller_env(gym.Env):
         truncated = self.energy <= 0.0 or self.time > self.max_time
 
         #reward
-        energy_used = min(0.0, dE) #energy used is >= 0.0
+        energy_used = min(0.0, dE) #energy used is <= 0.0
         reward = 0.015 * (dx + (self.sRw * energy_used))
 
         #success

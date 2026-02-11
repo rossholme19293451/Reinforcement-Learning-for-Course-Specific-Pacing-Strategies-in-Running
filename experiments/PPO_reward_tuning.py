@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from data.elevation_profile_creator import save_csv
 from env.hybrid_keller_env import *
 from agents.PPO_agent import *
 
@@ -8,12 +9,12 @@ profile = np.loadtxt("../data/elevation_profiles/Brading_10k.csv", delimiter=","
 
 r = 0.892  # s
 Fmax = 12.2  # m/s^2
-sigma = 41.54  # j/(kg*s)
+sigma = 41.54  # j/(kg*s)5432121`   |
 E0 = 2405.8  # j/kg
 tau = 337  # s
 
-sRw_list = [0.7]
-tRw_list = [30, 32 ,35, 37, 40]
+sRw_list = [0.4, 0.45, 0.50]
+tRw_list = [30 ,35, 40]
 
 results = []
 
@@ -57,5 +58,6 @@ for sRw in sRw_list:
 
 df = pd.DataFrame(results)
 print(df.to_string())
+df.to_csv("PPO_reward_tuning.csv")
 
 
