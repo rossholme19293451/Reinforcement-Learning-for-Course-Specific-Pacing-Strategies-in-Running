@@ -1,6 +1,8 @@
 import numpy as np
 import gymnasium as gym
+from gpxpy.geo import distance
 from gymnasium import spaces
+
 
 g = 9.81 #gravity
 
@@ -16,8 +18,6 @@ class hybrid_keller_env(gym.Env):
         sRw, #step reward weight, how much energy use is penalised per step
         tRw, # terminal reward weight, how much leftover energy is penalised
         dt = 0.2, #s
-        max_time = 1*3600,
-        v_max = 13.0,
     ):
 
         super().__init__()
@@ -32,7 +32,6 @@ class hybrid_keller_env(gym.Env):
             self.grades = np.zeros_like(self.elevations)
 
         self.total_distance = float(self.distances[-1])
-        self.max_time = max_time
 
         self.r = float(r)
         self.Fmax = float(Fmax)
@@ -41,15 +40,17 @@ class hybrid_keller_env(gym.Env):
         self.dt = float(dt)
         self.g = float(g)
         self.recovery_rate = 1 - np.exp(-dt/tau)
-        self.sRw = float(sRw)
+        self.sRw = sRw * (self.total_distance / 10000)
         self.tRw = float(tRw)
-        self.v_max = float(v_max)
+
+        self.v_max = self.Fmax * r
 
         if np.max(np.abs(self.elevations)) > 0:
             self.grade_max = np.max(np.abs(self.grades))
         else:
             self.grade_max = 0.001
 
+        self.max_time = 4 * self.total_distance / self.v_max
 
         self.action_space = spaces.Box(
             low = -1.0,

@@ -17,5 +17,5 @@ def generate_flat_course_csv(total_distance,  filename, step=1, elevation=0.0):
     return df
 
 if __name__ == "__main__":
-    df = generate_flat_course_csv(total_distance=1000, filename="flat_1km.csv")
+    df = generate_flat_course_csv(total_distance=10000, filename="flat_10km.csv")
     print(df.head())
