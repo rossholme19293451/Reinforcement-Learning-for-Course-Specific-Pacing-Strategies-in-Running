@@ -13,13 +13,15 @@ class hybrid_keller_env(gym.Env):
         sigma, #j/(kg*s)
         E0, #j/kg
         tau, #s
-        dt = 1.0, #s
-        max_time = 3*3600
+        sRw, #step reward weight, how much energy use is penalised per step
+        tRw, # terminal reward weight, how much leftover energy is penalised
+        dt = 0.2, #s
+        max_time = 1*3600,
+        v_max = 13.0,
     ):
 
         super().__init__()
         self.elevation_profile = np.array(elevation_profile)
-
         self.distances = self.elevation_profile[:, 0]
         self.elevations = self.elevation_profile[:, 1]
 
@@ -39,14 +41,27 @@ class hybrid_keller_env(gym.Env):
         self.dt = float(dt)
         self.g = float(g)
         self.recovery_rate = 1 - np.exp(-dt/tau)
+        self.sRw = float(sRw)
+        self.tRw = float(tRw)
+        self.v_max = float(v_max)
 
-        # 0 <= f(t) <= Fmax
-        self.action_space = spaces.Box(low = np.array([0.0]), high = np.array([self.Fmax]), dtype=np.float32)
+        if np.max(np.abs(self.elevations)) > 0:
+            self.grade_max = np.max(np.abs(self.grades))
+        else:
+            self.grade_max = 0.001
 
-        #0 <= distance <= total_distance, 0 <= velocity, 0 <= energy <= E0
-        high = np.array([self.total_distance, np.finfo(np.float32).max, self.E0], dtype=np.float32)
-        low = np.array([0.0, 0.0, 0.0], dtype=np.float32)
-        self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
+
+        self.action_space = spaces.Box(
+            low = -1.0,
+            high = 1.0,
+            shape = (1,),
+            dtype=np.float32)
+
+        #observation space normalised
+        self.observation_space = spaces.Box(
+            low=np.array([0.0, 0.0, 0.0, -1.0, 0.0], dtype=np.float32),
+            high=np.array([1.0, 1.0, 1.0, 1.0, 1.0], dtype=np.float32),
+            dtype=np.float32)
 
         self.reset()
 
@@ -56,15 +71,36 @@ class hybrid_keller_env(gym.Env):
         self.velocity = 0.0
         self.energy = self.E0
         self.time = 0.0
-        obs = np.array([self.distance, self.velocity, self.energy], dtype=np.float32)
+        self.prev_f = 0.0
+        obs = self._get_obs()
         info = {}
         return obs, info
 
     def _get_grade(self, distance):
         return float(np.interp(distance, self.distances, self.grades))
 
+    def _get_obs(self):
+        distance_scaled = self.distance / self.total_distance
+        velocity_scaled = self.velocity / self.v_max
+        energy_scaled = self.energy / self.E0
+        grade_scaled = self._get_grade(self.distance) / self.grade_max
+        prev_f_scaled = self.prev_f / self.Fmax
+        return np.clip(
+            np.array(
+                [distance_scaled, velocity_scaled, energy_scaled, grade_scaled, prev_f_scaled], dtype=np.float32
+            ),
+            [0.0, 0.0, 0.0, -1.0, 0.0],
+            [1.0, 1.0, 1.0, 1.0, 1.0]
+        )
+
     def step(self, action):
-        f = float(np.clip(action, 0.0, self.Fmax))
+        a = float(np.clip(action[0], -1.0, 1.0))
+        f_raw = (a + 1.0) / 2 * self.Fmax
+
+        alpha = 0.2
+        f = self.prev_f + alpha * (f_raw - self.prev_f)
+
+        self.prev_f = f
 
         grade = self._get_grade(self.distance)
         grade_effect = self.g * grade
@@ -91,12 +127,20 @@ class hybrid_keller_env(gym.Env):
         truncated = self.energy <= 0.0 or self.time > self.max_time
 
         #reward
-        if self.energy <= 0.0 and not terminated:
-            reward = self.time - self.max_time
-        else:
-            reward = -0.1
+        energy_used = min(0.0, dE) #energy used is <= 0.0
+        reward = 0.015 * (dx + (self.sRw * energy_used))
 
-        obs = np.array([self.distance, self.velocity, self.energy], dtype=np.float32)
+        #success
+        if terminated:
+            reward += 50
+            reward += -self.tRw * (self.energy / self.E0) ** 2
+
+        #failure
+        if truncated and not terminated:
+            reward = -100.0
+
+
+        obs = self._get_obs()
         info = {"time": self.time, "grade": grade}
         return obs, reward, terminated, truncated, info
 
