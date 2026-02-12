@@ -53,7 +53,7 @@ class PPO_Agent:
             lam = 0.95,
             clip_epsilon = 0.2,
             lr = 0.0005,
-            epochs = 3,
+            epochs = 4,
             minibatch_size = 128,
     ):
         self.env = env_fn

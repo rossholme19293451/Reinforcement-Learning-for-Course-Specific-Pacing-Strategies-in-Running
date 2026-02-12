@@ -1,10 +1,9 @@
-import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
 
 from env.hybrid_keller_env import *
 from agents.PPO_agent import *
 
-profile = np.loadtxt("../data/elevation_profiles/flat_1km.csv", delimiter=",", skiprows=1)
+profile = np.loadtxt("../data/elevation_profiles/Ryde_10.csv", delimiter=",", skiprows=1)
 
 r = 0.892  # s
 Fmax = 12.2  # m/s^2
@@ -12,7 +11,7 @@ sigma = 41.54  # j/(kg*s)
 E0 = 2405.8  # j/kg
 tau = 337  # s
 sRw = 0.40
-tRw = 35
+tRw = 40
 
 env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, sRw, tRw)
 
