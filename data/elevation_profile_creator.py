@@ -1,5 +1,4 @@
 import csv
-
 import gpxpy
 import numpy as np
 from scipy.interpolate import interp1d
@@ -44,12 +43,12 @@ def save_csv(filename, dists, elevs):
 
 if __name__ == "__main__":
     # load gpx file
-    with open("course_GPXs/up_and_down.gpx", "r") as f:
+    with open("course_GPXs/Ox Half New Route.gpx", "r") as f:
         gpx = gpxpy.parse(f)
 
     dists, elevs = parse_GPX_to_points(gpx)
     new_dists, new_elevs = resample_to_1m(dists, elevs)
-    filename = "../data/elevation_profiles/up_and_down.csv"
+    filename = "elevation_profiles/Oxford_HM.csv"
     save_csv(filename, new_dists, new_elevs)
 
     import matplotlib.pyplot as plt

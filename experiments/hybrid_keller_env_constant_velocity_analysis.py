@@ -3,15 +3,15 @@ from scipy.signal import savgol_filter
 
 from env.hybrid_keller_env import *
 
-profile = np.loadtxt("../data/elevation_profiles/Brading_10k.csv", delimiter=",", skiprows=1)
+profile = np.loadtxt("../data/elevation_profiles/Ryde_10.csv", delimiter=",", skiprows=1)
 
 r = 0.892 #s
 Fmax = 12.2  #m/s^2
 sigma = 41.54  #j/(kg*s)
 E0 = 2405.8 #j/kg
 tau = 337 #s
-sRw = 0.75
-tRw = 25
+sRw = 0.4
+tRw = 40
 
 env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, sRw, tRw)
 
@@ -21,7 +21,7 @@ done = False
 actions, distances, velocities, energies, elevations= [], [], [], [], []
 reward = 0
 
-v_target = 6.1766
+v_target = 6.103
 
 while not done:
     #get current grade
@@ -62,6 +62,7 @@ ax1.plot(distances, elevations, color='red', label="Elevation (m)")
 ax1.set_xlabel("Distance (m)")
 ax1.set_ylabel("Elevation (m)", color='red')
 ax1.tick_params(axis='y', labelcolor='red')
+ax1.grid(True)
 
 ax2 = ax1.twinx()
 ax2.plot(distances, velocities, color='blue', label="Velocity (m/s)")
@@ -78,6 +79,7 @@ ax1.plot(distances, elevations, color='red', label="Elevation (m)")
 ax1.set_xlabel("Distance (m)")
 ax1.set_ylabel("Elevation (m)", color='red')
 ax1.tick_params(axis='y', labelcolor='red')
+ax1.grid(True)
 
 ax2 = ax1.twinx()
 ax2.plot(distances, energies, color='green', label="Energy (J/kg)")
@@ -94,6 +96,7 @@ ax1.plot(distances, velocities, color='blue', label="Velocity (m/s)")
 ax1.set_xlabel("Distance (m)")
 ax1.set_ylabel("Velocity (m/s)", color='blue')
 ax1.tick_params(axis='y', labelcolor='blue')
+ax1.grid(True)
 
 ax2 = ax1.twinx()
 ax2.plot(distances, energies, color='green', label="Energy (J/kg)")
@@ -110,13 +113,43 @@ ax1.plot(distances, elevations, color='red', label="Elevation (m)")
 ax1.set_xlabel("Distance (m)")
 ax1.set_ylabel("Elevation (m)", color='red')
 ax1.tick_params(axis='y', labelcolor='red')
-ax2 = ax1.twinx()
+ax1.grid(True)
 
-ax2.plot(distances, actions, color='blue', label="Force (m/s)")
-ax2.set_ylabel("Force (m/s)", color='blue')
-ax2.tick_params(axis='y', labelcolor='blue')
+ax2 = ax1.twinx()
+ax2.plot(distances, actions, color='purple', label="Force (m/s)")
+ax2.set_ylabel("Force (m/s)", color='purple')
+ax2.tick_params(axis='y', labelcolor='purple')
 
 plt.title("Force mapped onto Elevation Profile")
+fig.tight_layout()
+plt.show()
+
+energy_usage_windows = {}
+
+window_length = len(distances) // 10
+
+for i in range(10):
+    window_start = i * window_length
+    window_end = window_start + window_length
+    window_midpoint = (window_start + window_end) // 2
+    energy_usage_windows[window_midpoint] = energies[window_start] - energies[window_end]
+
+mid_distances = np.array([distances[idx] for idx in energy_usage_windows.keys()])
+mid_energies = np.array(list(energy_usage_windows.values()))
+
+fig, ax1 = plt.subplots(figsize=(12, 6))
+ax1.plot(distances, elevations, color='red', alpha=0.4, label="Elevation (m)")
+ax1.set_xlabel("Distance (m)")
+ax1.set_ylabel("Elevation (m)", color='red')
+ax1.tick_params(axis='y', labelcolor='red')
+ax1.grid(True)
+
+ax2 = ax1.twinx()
+ax2.plot(mid_distances, mid_energies, color='green', marker='o', linewidth=2)
+ax2.set_ylabel("Avg Energy Usage (J/kg)", color='green')
+ax2.tick_params(axis='y', labelcolor='green')
+
+plt.title("Energy Usage per Segment mapped onto Elevation Profile")
 fig.tight_layout()
 plt.show()
 

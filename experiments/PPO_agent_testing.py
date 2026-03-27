@@ -1,9 +1,8 @@
 from scipy.signal import savgol_filter
-
 from env.hybrid_keller_env import *
 from agents.PPO_agent import *
 
-profile = np.loadtxt("../data/elevation_profiles/Ryde_10.csv", delimiter=",", skiprows=1)
+profile = np.loadtxt("../data/elevation_profiles/Brading_10k.csv", delimiter=",", skiprows=1)
 
 r = 0.892  # s
 Fmax = 12.2  # m/s^2
@@ -40,7 +39,7 @@ energies = np.array(ep_data["energy"]) * env.E0
 
 actions = []
 for action in np.array(ep_data["action"]):
-    actions.append((action[0] + 1.0) / 2 * env.Fmax)
+    actions.append(float(action) * env.Fmax)
 
 actions = np.array(actions)
 actions = savgol_filter(actions, window_length=500, polyorder=3)
@@ -115,10 +114,39 @@ ax1.tick_params(axis='y', labelcolor='red')
 ax2 = ax1.twinx()
 ax1.grid(True)
 
-ax2.plot(distances, actions, color='blue', label="Force (m/s)")
-ax2.set_ylabel("Force (m/s)", color='blue')
-ax2.tick_params(axis='y', labelcolor='blue')
+ax2.plot(distances, actions, color='purple', label="Force (m/s)")
+ax2.set_ylabel("Force (m/s)", color='purple')
+ax2.tick_params(axis='y', labelcolor='purple')
 
 plt.title("Force mapped onto Elevation Profile")
+fig.tight_layout()
+plt.show()
+
+energy_usage_windows = {}
+
+window_length = len(energies) // 10
+
+for i in range(10):
+    window_start = i * window_length
+    window_end = window_start + window_length
+    window_midpoint = (window_start + window_end) // 2
+    energy_usage_windows[window_midpoint] = energies[window_start] - energies[window_end]
+
+mid_distances = np.array([distances[idx] for idx in energy_usage_windows.keys()])
+mid_energies = np.array(list(energy_usage_windows.values()))
+
+fig, ax1 = plt.subplots(figsize=(12, 6))
+ax1.plot(distances, elevations, color='red', alpha=0.4, label="Elevation (m)")
+ax1.set_xlabel("Distance (m)")
+ax1.set_ylabel("Elevation (m)", color='red')
+ax1.tick_params(axis='y', labelcolor='red')
+ax1.grid(True)
+
+ax2 = ax1.twinx()
+ax2.plot(mid_distances, mid_energies, color='green', marker='o', linewidth=2)
+ax2.set_ylabel("Avg Energy Usage (J/kg)", color='green')
+ax2.tick_params(axis='y', labelcolor='green')
+
+plt.title("Energy Usage per Segment mapped onto Elevation Profile")
 fig.tight_layout()
 plt.show()

@@ -1,8 +1,6 @@
 import numpy as np
 import gymnasium as gym
-from gpxpy.geo import distance
 from gymnasium import spaces
-
 
 g = 9.81 #gravity
 
