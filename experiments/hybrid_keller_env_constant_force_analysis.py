@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
-
 from env.hybrid_keller_env import *
 
+#load elevation profile
 profile = np.loadtxt("../data/elevation_profiles/Ryde_10.csv", delimiter=",", skiprows=1)
 
+#physiological parameters
 r = 0.892 #s
 Fmax = 12.2  #m/s^2
 sigma = 41.54  #j/(kg*s)
@@ -13,21 +14,28 @@ tau = 337 #s
 sRw = 0.4
 tRw = 40
 
+#initialise environment
 env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, sRw, tRw)
 
 obs, _ = env.reset()
 done = False
 reward = 0
 
+#data collection arrays
 actions, distances, velocities, energies, elevations= [], [], [], [], []
 
+#run constant force baseline strategy
 while not done:
+    #target force
     f = Fmax * 0.5614
+    #convert force to action space
     action = [(f / Fmax * 2) - 1.0]
+
     obs, temp_reward, terminated, truncated, info = env.step(action)
     print(info)
     env.render()
 
+    #store trajectory data
     actions.append(f)
     distance = obs[0] * env.total_distance
     velocity = obs[1] * env.v_max
@@ -36,7 +44,6 @@ while not done:
     distances.append(distance)
     velocities.append(velocity)
     energies.append(energy)
-
     elevations.append(np.interp(distance, profile[:,0], profile[:,1]))
 
     reward += temp_reward
@@ -46,6 +53,7 @@ while not done:
 
 print(f"Finished in {info['time']}s / {info['time']/60} mins")
 
+#smooth velocity for cleaner visualisation
 velocities = savgol_filter(velocities, window_length=500, polyorder=3)
 
 #plot elevation and velocity
@@ -116,19 +124,22 @@ plt.title("Force mapped onto Elevation Profile")
 fig.tight_layout()
 plt.show()
 
+#compute average energy use per segment
 energy_usage_windows = {}
-
 window_length = len(distances) // 10
 
 for i in range(10):
     window_start = i * window_length
     window_end = window_start + window_length
     window_midpoint = (window_start + window_end) // 2
+    #energy used = energy at start - energy at end
     energy_usage_windows[window_midpoint] = energies[window_start] - energies[window_end]
 
+#extract segment midpoints and energy usage
 mid_distances = np.array([distances[idx] for idx in energy_usage_windows.keys()])
 mid_energies = np.array(list(energy_usage_windows.values()))
 
+#plot segmental energy usage and elevation
 fig, ax1 = plt.subplots(figsize=(12, 6))
 ax1.plot(distances, elevations, color='red', alpha=0.4, label="Elevation (m)")
 ax1.set_xlabel("Distance (m)")

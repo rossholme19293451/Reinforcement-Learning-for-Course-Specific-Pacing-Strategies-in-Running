@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
-
 from env.hybrid_keller_env import *
 
+#load elevation pofile
 profile = np.loadtxt("../data/elevation_profiles/Ryde_10.csv", delimiter=",", skiprows=1)
 
+#physiological parameters
 r = 0.892 #s
 Fmax = 12.2  #m/s^2
 sigma = 41.54  #j/(kg*s)
@@ -13,29 +14,35 @@ tau = 337 #s
 sRw = 0.4
 tRw = 40
 
+#initalise environment
 env = hybrid_keller_env(profile, r, Fmax, sigma, E0, tau, sRw, tRw)
 
 obs, _ = env.reset()
 done = False
 
+#data collection arrays
 actions, distances, velocities, energies, elevations= [], [], [], [], []
 reward = 0
 
+#target velocity
 v_target = 6.103
 
+#run constant velocity baseline strategy
 while not done:
-    #get current grade
+    #get current grade to compute required force
     current_grade = np.interp(obs[0] * env.total_distance, profile[:,0], env.grades)
 
-    #compute force for constant velocity
+    #compute force to maintain constant velocity on current gradient
     f = v_target / env.r + env.g * current_grade
     f = np.clip(f, 0.0, env.Fmax)
 
+    #convert force to action space
     action = [(f / Fmax * 2) - 1.0]
     obs, temp_reward, terminated, truncated, info = env.step(action)
     print(info)
     env.render()
 
+    #store trajectory data
     actions.append(f)
     distance = obs[0] * env.total_distance
     velocity = obs[1] * env.v_max
@@ -54,6 +61,7 @@ while not done:
 
 print(f"Finished in {info['time']}s / {info['time']/60} mins")
 
+#smooth force for cleaner visualisation
 actions = savgol_filter(actions, window_length=500, polyorder=3)
 
 #plot elevation and velocity
@@ -124,19 +132,22 @@ plt.title("Force mapped onto Elevation Profile")
 fig.tight_layout()
 plt.show()
 
+#compute average energy usage per segment
 energy_usage_windows = {}
-
 window_length = len(distances) // 10
 
 for i in range(10):
     window_start = i * window_length
     window_end = window_start + window_length
     window_midpoint = (window_start + window_end) // 2
+    #energy used = energy at start - energy at end
     energy_usage_windows[window_midpoint] = energies[window_start] - energies[window_end]
 
+#extract segment midpoints and energy usage
 mid_distances = np.array([distances[idx] for idx in energy_usage_windows.keys()])
 mid_energies = np.array(list(energy_usage_windows.values()))
 
+#plot segmental energy usage and elevation
 fig, ax1 = plt.subplots(figsize=(12, 6))
 ax1.plot(distances, elevations, color='red', alpha=0.4, label="Elevation (m)")
 ax1.set_xlabel("Distance (m)")
@@ -152,7 +163,3 @@ ax2.tick_params(axis='y', labelcolor='green')
 plt.title("Energy Usage per Segment mapped onto Elevation Profile")
 fig.tight_layout()
 plt.show()
-
-
-
-
