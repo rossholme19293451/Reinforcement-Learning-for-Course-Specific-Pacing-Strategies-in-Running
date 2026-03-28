@@ -3,9 +3,9 @@ from env.hybrid_keller_env import *
 from agents.PPO_agent import *
 
 #load elevation profile
-profile = np.loadtxt("../data/elevation_profiles/Brading_10k.csv", delimiter=",", skiprows=1)
+profile = np.loadtxt("../data/elevation_profiles/Machlud_HM.csv", delimiter=",", skiprows=1)
 
-#physiological parameters
+#environment parameters
 r = 0.892  # s
 Fmax = 12.2  # m/s^2
 sigma = 41.54  # j/(kg*s)

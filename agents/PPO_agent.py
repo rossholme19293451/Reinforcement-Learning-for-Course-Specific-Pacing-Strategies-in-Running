@@ -69,7 +69,7 @@ class PPO_Agent:
             env_fn,
             device,
             frames_per_batch = 18_000,
-            total_frames = 1_440_000,
+            total_frames = 2_880_000,
             gamma = 0.99,  #discount factor
             lam = 0.95,  #GAE lambda parameter
             clip_epsilon = 0.2,  #PPO clipping parameter

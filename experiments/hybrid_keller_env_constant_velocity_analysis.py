@@ -3,7 +3,7 @@ from scipy.signal import savgol_filter
 from env.hybrid_keller_env import *
 
 #load elevation pofile
-profile = np.loadtxt("../data/elevation_profiles/Ryde_10.csv", delimiter=",", skiprows=1)
+profile = np.loadtxt("../data/elevation_profiles/Machlud_HM.csv", delimiter=",", skiprows=1)
 
 #physiological parameters
 r = 0.892 #s
@@ -25,7 +25,7 @@ actions, distances, velocities, energies, elevations= [], [], [], [], []
 reward = 0
 
 #target velocity
-v_target = 6.103
+v_target = 5.755
 
 #run constant velocity baseline strategy
 while not done:
@@ -59,7 +59,17 @@ while not done:
 
     done = terminated or truncated
 
-print(f"Finished in {info['time']}s / {info['time']/60} mins")
+#performance summary
+print(f"Distance reached: {distances[-1]}, Timestep: {info['time']}, Time: {info['time']/60}")
+
+#performance metrics
+print("Mean force: ", np.mean(actions))
+print("Std Force: ", np.std(actions))
+print("Mean velocity: ", np.mean(velocities))
+print("Std velocity: ", np.std(velocities))
+print("Mean power: ", np.mean(np.array(actions) * np.array(velocities)))
+print("Final Energy: ", energies[-1])
+print("Sigma: ", sigma)
 
 #smooth force for cleaner visualisation
 actions = savgol_filter(actions, window_length=500, polyorder=3)
@@ -141,7 +151,7 @@ for i in range(10):
     window_end = window_start + window_length
     window_midpoint = (window_start + window_end) // 2
     #energy used = energy at start - energy at end
-    energy_usage_windows[window_midpoint] = energies[window_start] - energies[window_end]
+    energy_usage_windows[window_midpoint] = energies[window_start] - energies[window_end-1]
 
 #extract segment midpoints and energy usage
 mid_distances = np.array([distances[idx] for idx in energy_usage_windows.keys()])

@@ -3,7 +3,7 @@ from scipy.signal import savgol_filter
 from env.hybrid_keller_env import *
 
 #load elevation profile
-profile = np.loadtxt("../data/elevation_profiles/Ryde_10.csv", delimiter=",", skiprows=1)
+profile = np.loadtxt("../data/elevation_profiles/Machlud_HM.csv", delimiter=",", skiprows=1)
 
 #physiological parameters
 r = 0.892 #s
@@ -27,7 +27,7 @@ actions, distances, velocities, energies, elevations= [], [], [], [], []
 #run constant force baseline strategy
 while not done:
     #target force
-    f = Fmax * 0.5614
+    f = Fmax * 0.5299
     #convert force to action space
     action = [(f / Fmax * 2) - 1.0]
 
@@ -51,7 +51,17 @@ while not done:
 
     done = terminated or truncated
 
-print(f"Finished in {info['time']}s / {info['time']/60} mins")
+#performance summary
+print(f"Distance reached: {distances[-1]}, Timestep: {info['time']}, Time: {info['time']/60}")
+
+#performance metrics
+print("Mean force: ", np.mean(actions))
+print("Std Force: ", np.std(actions))
+print("Mean velocity: ", np.mean(velocities))
+print("Std velocity: ", np.std(velocities))
+print("Mean power: ", np.mean(np.array(actions) * np.array(velocities)))
+print("Final Energy: ", energies[-1])
+print("Sigma: ", sigma)
 
 #smooth velocity for cleaner visualisation
 velocities = savgol_filter(velocities, window_length=500, polyorder=3)

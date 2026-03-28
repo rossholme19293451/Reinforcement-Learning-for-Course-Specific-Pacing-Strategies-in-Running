@@ -56,7 +56,7 @@ def save_csv(filename, dists, elevs):
 
 if __name__ == "__main__":
     # load gpx file
-    with open("course_GPXs/Ox Half New Route.gpx", "r") as f:
+    with open("course_GPXs/Oxford HM.gpx", "r") as f:
         gpx = gpxpy.parse(f)
 
     #process: parse -> resample to 1m -> smooth

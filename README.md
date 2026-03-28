@@ -4,7 +4,7 @@ Undergraduate dissertation project applying Proximal Policy Optimization (PPO) t
 
 ## Overview
 
-This project extends Keller's 1973 mathematical model of competitive running to incorporate realistic elevation profiles and asymmetric energy recovery dynamics (Skiba et al. 2012). A PPO agent (Schulman et al. 2017) using GAE (Schulman et al. 2018) to compute advantages, learns to optimize force application throughout a race course to minimize total time while respecting physiological constraints.
+This project extends Keller's 1973 mathematical model of competitive running to incorporate realistic elevation profiles and more realistic energy recovery dynamics (Skiba et al. 2012). A PPO agent (Schulman et al. 2017) using GAE (Schulman et al. 2018) to compute advantages, learns to optimize force application throughout a race course to minimize total time while respecting physiological constraints.
 
 ## Key Components
 
